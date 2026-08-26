@@ -1,34 +1,41 @@
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
 
-export default function Page() {
+export default function HowItWorksPage() {
   return (
     <>
       <Navbar />
       <main className="flex-1">
-        <Section className="py-24 md:py-32 bg-surface-hover border-b border-border text-center min-h-[60vh] flex flex-col justify-center">
-          <div className="max-w-3xl mx-auto flex flex-col items-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">How It Works</h1>
-            <p className="text-xl text-muted mb-10 max-w-2xl">
-              Share your digital identity in three simple steps.
-            </p>
-            <div className="flex gap-4">
-              <Button size="lg" asChild>
-                <Link href="/products">Get Your Card</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/contact">Contact Sales</Link>
-              </Button>
+        <Section className="bg-surface-hover py-24 min-h-[70vh] flex flex-col justify-center">
+          <div className="max-w-5xl mx-auto w-full">
+            <div className="text-center mb-16">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">How it works</h1>
+              <p className="text-lg md:text-xl text-muted">From ordering to networking in a few simple steps.</p>
             </div>
-          </div>
-        </Section>
-        <Section className="py-24">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-6">More coming soon.</h2>
-            <p className="text-muted text-lg">We are actively building out this page.</p>
+            
+            <div className="grid md:grid-cols-4 gap-6 text-center">
+              <div className="bg-surface p-8 rounded-2xl shadow-sm border border-border flex flex-col items-center hover:shadow-md transition-shadow">
+                <div className="w-14 h-14 bg-accent/10 rounded-full flex items-center justify-center text-accent font-bold text-2xl mb-6">1</div>
+                <h4 className="font-semibold text-lg mb-3">Order your card</h4>
+                <p className="text-muted leading-relaxed">Select your card style and complete the checkout.</p>
+              </div>
+              <div className="bg-surface p-8 rounded-2xl shadow-sm border border-border flex flex-col items-center hover:shadow-md transition-shadow">
+                <div className="w-14 h-14 bg-accent/10 rounded-full flex items-center justify-center text-accent font-bold text-2xl mb-6">2</div>
+                <h4 className="font-semibold text-lg mb-3">Create profile</h4>
+                <p className="text-muted leading-relaxed">While your card ships, build your digital profile online.</p>
+              </div>
+              <div className="bg-surface p-8 rounded-2xl shadow-sm border border-border flex flex-col items-center hover:shadow-md transition-shadow">
+                <div className="w-14 h-14 bg-accent/10 rounded-full flex items-center justify-center text-accent font-bold text-2xl mb-6">3</div>
+                <h4 className="font-semibold text-lg mb-3">Activate</h4>
+                <p className="text-muted leading-relaxed">Receive your card and tap it to instantly link to your profile.</p>
+              </div>
+              <div className="bg-surface p-8 rounded-2xl shadow-sm border border-border flex flex-col items-center hover:shadow-md transition-shadow">
+                <div className="w-14 h-14 bg-accent/10 rounded-full flex items-center justify-center text-accent font-bold text-2xl mb-6">4</div>
+                <h4 className="font-semibold text-lg mb-3">Connect</h4>
+                <p className="text-muted leading-relaxed">Start tapping to share your identity with anyone, anywhere.</p>
+              </div>
+            </div>
           </div>
         </Section>
       </main>

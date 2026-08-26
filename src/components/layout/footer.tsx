@@ -13,6 +13,10 @@ export function Footer() {
             <p className="text-sm text-muted mb-6 max-w-xs">
               One Tap. Endless Connections. Your professional identity, instantly shared.
             </p>
+            <div className="flex flex-col gap-1 mb-6 text-sm">
+              <a href="mailto:sathiya@dxso.in" className="text-foreground hover:text-accent font-medium transition-colors">sathiya@dxso.in</a>
+              <a href="tel:8971532323" className="text-foreground hover:text-accent font-medium transition-colors">8971532323</a>
+            </div>
             <div className="flex items-center gap-4 text-muted">
               <a href="#" className="hover:text-foreground transition-colors"><LinkIcon className="h-5 w-5" /></a>
               <a href="#" className="hover:text-foreground transition-colors"><LinkIcon className="h-5 w-5" /></a>
