@@ -33,6 +33,8 @@ export function Navbar() {
             <Link href="/how-it-works" className="transition-colors hover:text-foreground/80 text-foreground/60">How It Works</Link>
             <Link href="/pricing" className="transition-colors hover:text-foreground/80 text-foreground/60">Pricing</Link>
             <Link href="/blog" className="transition-colors hover:text-foreground/80 text-foreground/60">Resources</Link>
+            <Link href="/about" className="transition-colors hover:text-foreground/80 text-foreground/60">About</Link>
+            <Link href="/contact" className="transition-colors hover:text-foreground/80 text-foreground/60">Contact</Link>
           </nav>
         </div>
 
@@ -56,6 +58,8 @@ export function Navbar() {
           <Link href="/business" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>Solutions</Link>
           <Link href="/how-it-works" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>How It Works</Link>
           <Link href="/pricing" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>Pricing</Link>
+          <Link href="/about" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>About</Link>
+          <Link href="/contact" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>Contact</Link>
           <Link href="/login" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>Login</Link>
           <div className="mt-2 flex">
             <Button className="w-full" asChild>
