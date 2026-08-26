@@ -50,7 +50,7 @@ export default function CorporateProductPage() {
               
               <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <Button size="lg" className="h-14 text-lg w-full sm:w-auto px-8" asChild>
-                  <Link href="/business">Get a Quote</Link>
+                  <Link href="/contact">Get a Quote</Link>
                 </Button>
               </div>
             </div>

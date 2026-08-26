@@ -50,7 +50,7 @@ export default function MetalProductPage() {
               
               <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <Button size="lg" variant="outline" className="h-14 text-lg w-full sm:w-auto px-8 bg-white text-black hover:bg-zinc-200 border-none" asChild>
-                  <Link href="/checkout?product=metal">Customize Your Metal Card</Link>
+                  <Link href="/contact">Customize Your Metal Card</Link>
                 </Button>
               </div>
             </div>

@@ -49,7 +49,7 @@ export default function EssentialProductPage() {
               
               <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <Button size="lg" className="h-14 text-lg w-full sm:w-auto px-8" asChild>
-                  <Link href="/checkout?product=essential">Buy Essential Now</Link>
+                  <Link href="/contact">Buy Essential Now</Link>
                 </Button>
               </div>
             </div>

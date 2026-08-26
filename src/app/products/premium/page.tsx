@@ -52,7 +52,7 @@ export default function PremiumProductPage() {
               
               <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <Button size="lg" className="h-14 text-lg w-full sm:w-auto px-8" asChild>
-                  <Link href="/checkout?product=premium">Buy Premium Now</Link>
+                  <Link href="/contact">Buy Premium Now</Link>
                 </Button>
               </div>
             </div>
