@@ -53,7 +53,7 @@ export default function ProductsPage() {
                 </ul>
               </CardContent>
               <CardFooter className="pt-6">
-                <Button className="w-full h-12 text-base" asChild><Link href="/checkout?product=essential">Select Essential</Link></Button>
+                <Button className="w-full h-12 text-base" asChild><Link href="/products/essential">View Details</Link></Button>
               </CardFooter>
             </Card>
 
@@ -87,7 +87,7 @@ export default function ProductsPage() {
                 </ul>
               </CardContent>
               <CardFooter className="pt-6">
-                <Button className="w-full h-12 text-base" asChild><Link href="/checkout?product=premium">Select Premium</Link></Button>
+                <Button className="w-full h-12 text-base" asChild><Link href="/products/premium">View Details</Link></Button>
               </CardFooter>
             </Card>
 
@@ -118,7 +118,7 @@ export default function ProductsPage() {
                 </ul>
               </CardContent>
               <CardFooter className="pt-6">
-                <Button variant="outline" className="w-full h-12 text-base bg-white text-black hover:bg-gray-200 border-none" asChild><Link href="/checkout?product=metal">Select Metal</Link></Button>
+                <Button variant="outline" className="w-full h-12 text-base bg-white text-black hover:bg-gray-200 border-none" asChild><Link href="/products/metal">View Details</Link></Button>
               </CardFooter>
             </Card>
 
@@ -150,7 +150,7 @@ export default function ProductsPage() {
                 </ul>
               </CardContent>
               <CardFooter className="pt-6">
-                <Button variant="outline" className="w-full h-12 text-base border-accent text-accent hover:bg-accent hover:text-white" asChild><Link href="/business">Get a Quote</Link></Button>
+                <Button variant="outline" className="w-full h-12 text-base border-accent text-accent hover:bg-accent hover:text-white" asChild><Link href="/products/corporate">View Details</Link></Button>
               </CardFooter>
             </Card>
             
