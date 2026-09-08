@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowLeft, Mail, Lock } from "lucide-react"
 
 export default function LoginPage() {
@@ -15,7 +16,15 @@ export default function LoginPage() {
         <div className="w-full max-w-[400px] flex flex-col items-center">
           {/* Logo */}
           <Link href="/" className="mb-8 flex items-center justify-center">
-             <div className="font-bold text-3xl tracking-tight text-primary">TapOnce</div>
+            <Image 
+              src="/Taponce_logo.png" 
+              alt="TapOnce" 
+              width={220} 
+              height={60} 
+              className="h-12 w-auto object-contain" 
+              priority 
+              unoptimized
+            />
           </Link>
           
           <div className="w-full bg-surface border border-border shadow-xl rounded-2xl p-8">

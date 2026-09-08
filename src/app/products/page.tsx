@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle2, ChevronDown, Sparkles } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function ProductsPage() {
   return (
@@ -28,11 +29,14 @@ export default function ProductsPage() {
             
             {/* Essential */}
             <Card className="flex flex-col relative overflow-hidden group hover:shadow-xl transition-shadow duration-300">
-              <div className="h-56 bg-gray-100 m-2 mb-0 rounded-t-xl flex items-center justify-center relative overflow-hidden group-hover:bg-gray-200 transition-colors">
-                <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 to-white"></div>
-                <div className="relative z-10 w-48 h-32 bg-white rounded-lg shadow-lg border border-gray-100 flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
-                  <span className="font-bold text-gray-400">Essential PVC</span>
-                </div>
+              <div className="h-56 m-2 mb-0 rounded-t-xl overflow-hidden relative group-hover:opacity-95 transition-opacity">
+                <Image 
+                  src="/images/cards/essential.jpg" 
+                  alt="TapOnce Essential PVC NFC Card" 
+                  fill 
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  unoptimized
+                />
               </div>
               <CardHeader>
                 <CardTitle className="text-2xl">Essential</CardTitle>
@@ -62,11 +66,14 @@ export default function ProductsPage() {
               <div className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-lg rounded-tr-xl z-20 flex items-center gap-1 shadow-sm">
                 <Sparkles className="h-3 w-3" /> POPULAR
               </div>
-              <div className="h-56 bg-gray-100 m-2 mb-0 rounded-t-xl flex items-center justify-center relative overflow-hidden group-hover:bg-gray-200 transition-colors">
-                <div className="absolute inset-0 bg-gradient-to-tr from-gray-800 to-gray-600"></div>
-                <div className="relative z-10 w-48 h-32 bg-gray-900 rounded-lg shadow-2xl border border-gray-700 flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
-                  <span className="font-bold text-gray-300">Premium Matte</span>
-                </div>
+              <div className="h-56 m-2 mb-0 rounded-t-xl overflow-hidden relative group-hover:opacity-95 transition-opacity">
+                <Image 
+                  src="/images/cards/premium.jpg" 
+                  alt="TapOnce Premium Matte NFC Card" 
+                  fill 
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  unoptimized
+                />
               </div>
               <CardHeader>
                 <CardTitle className="text-2xl">Premium</CardTitle>
@@ -93,11 +100,14 @@ export default function ProductsPage() {
 
             {/* Metal */}
             <Card className="flex flex-col relative overflow-hidden bg-gray-950 text-white border-gray-800 group hover:shadow-xl transition-shadow duration-300 hover:border-gray-700">
-              <div className="h-56 bg-gray-900 m-2 mb-0 rounded-t-xl flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-tr from-zinc-600 to-zinc-400 opacity-20"></div>
-                <div className="relative z-10 w-48 h-32 bg-zinc-800 rounded-lg shadow-2xl border-2 border-zinc-500/30 flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
-                  <span className="font-bold text-zinc-400 uppercase tracking-widest text-sm">Stainless Metal</span>
-                </div>
+              <div className="h-56 m-2 mb-0 rounded-t-xl overflow-hidden relative group-hover:opacity-95 transition-opacity">
+                <Image 
+                  src="/images/cards/metal.jpg" 
+                  alt="TapOnce Metal Stainless Steel NFC Card" 
+                  fill 
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  unoptimized
+                />
               </div>
               <CardHeader>
                 <CardTitle className="text-2xl">Metal</CardTitle>
@@ -124,12 +134,14 @@ export default function ProductsPage() {
 
             {/* Custom / Corporate */}
             <Card className="flex flex-col relative overflow-hidden group hover:shadow-xl transition-shadow duration-300">
-              <div className="h-56 bg-gray-100 m-2 mb-0 rounded-t-xl flex items-center justify-center relative overflow-hidden group-hover:bg-gray-200 transition-colors">
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-900 to-indigo-800"></div>
-                <div className="relative z-10 w-48 h-32 bg-white/10 backdrop-blur-sm rounded-lg shadow-xl border border-white/20 flex flex-col items-center justify-center gap-2 transform group-hover:scale-105 transition-transform duration-300">
-                  <div className="w-12 h-12 bg-white/20 rounded-full"></div>
-                  <div className="w-24 h-2 bg-white/20 rounded-full"></div>
-                </div>
+              <div className="h-56 m-2 mb-0 rounded-t-xl overflow-hidden relative group-hover:opacity-95 transition-opacity">
+                <Image 
+                  src="/images/cards/corporate.jpg" 
+                  alt="TapOnce Corporate Custom Branded NFC Cards" 
+                  fill 
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  unoptimized
+                />
               </div>
               <CardHeader>
                 <CardTitle className="text-2xl">Corporate</CardTitle>

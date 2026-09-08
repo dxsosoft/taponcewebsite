@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -12,8 +13,16 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/60">
       <div className="container mx-auto px-4 md:px-6 h-16 max-w-7xl flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl tracking-tight">TapOnce</span>
+          <Link href="/" className="flex items-center">
+            <Image 
+              src="/Taponce_logo.png" 
+              alt="TapOnce" 
+              width={180} 
+              height={48} 
+              className="h-10 w-auto object-contain" 
+              priority 
+              unoptimized
+            />
           </Link>
           
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
@@ -32,16 +41,17 @@ export function Navbar() {
             </div>
             <Link href="/how-it-works" className="transition-colors hover:text-foreground/80 text-foreground/60">How It Works</Link>
             <Link href="/pricing" className="transition-colors hover:text-foreground/80 text-foreground/60">Pricing</Link>
-            <Link href="/blog" className="transition-colors hover:text-foreground/80 text-foreground/60">Resources</Link>
             <Link href="/about" className="transition-colors hover:text-foreground/80 text-foreground/60">About</Link>
             <Link href="/contact" className="transition-colors hover:text-foreground/80 text-foreground/60">Contact</Link>
           </nav>
         </div>
 
-        <div className="hidden md:flex items-center gap-4">
-          <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4">Login</Link>
+        <div className="hidden md:flex items-center gap-3">
+          <Button variant="outline" asChild>
+            <Link href="/order-status">Order Status</Link>
+          </Button>
           <Button asChild>
-            <Link href="/products">Get Your Card</Link>
+            <Link href="/order">Get Your Card</Link>
           </Button>
         </div>
 
@@ -60,10 +70,12 @@ export function Navbar() {
           <Link href="/pricing" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>Pricing</Link>
           <Link href="/about" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>About</Link>
           <Link href="/contact" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>Contact</Link>
-          <Link href="/login" className="text-sm font-medium p-2 hover:bg-surface-hover rounded-md" onClick={() => setIsOpen(false)}>Login</Link>
-          <div className="mt-2 flex">
+          <div className="mt-2 flex flex-col gap-2">
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/order-status" onClick={() => setIsOpen(false)}>Order Status</Link>
+            </Button>
             <Button className="w-full" asChild>
-              <Link href="/products" onClick={() => setIsOpen(false)}>Get Your Card</Link>
+              <Link href="/order" onClick={() => setIsOpen(false)}>Get Your Card</Link>
             </Button>
           </div>
         </div>

@@ -16,8 +16,8 @@ export function HeroAnimation() {
         <PhoneMockup className="h-[550px] w-[280px]">
           <div className="w-full h-full bg-slate-50 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
             {/* Background elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full blur-3xl -mr-10 -mt-10"></div>
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-100 rounded-full blur-3xl -ml-10 -mb-10"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent/10 rounded-full blur-3xl -ml-10 -mb-10"></div>
             
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -65,7 +65,7 @@ export function HeroAnimation() {
           times: [0, 0.4, 1],
           ease: "easeInOut" 
         }}
-        className="absolute w-[200px] h-[125px] rounded-xl bg-gradient-to-tr from-gray-900 to-gray-700 shadow-2xl border border-gray-600/50 flex flex-col justify-between p-4 z-20 text-white"
+        className="absolute w-[200px] h-[125px] rounded-xl bg-gradient-to-tr from-[#051f44] to-[#0da5ad] shadow-2xl border border-white/20 flex flex-col justify-between p-4 z-20 text-white"
       >
         <div className="flex justify-between items-start">
           <div className="font-bold text-sm tracking-widest text-white/90">TAPONCE</div>

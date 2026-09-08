@@ -29,8 +29,8 @@ export default function Home() {
                 TapOnce brings your contact details, social profiles, website, portfolio and business information together in one smart digital identity — accessible with a simple tap or scan.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mt-4 justify-center md:justify-start">
-                <Button size="lg" className="text-base rounded-full" asChild>
-                  <Link href="/products">Get Your TapOnce Card</Link>
+                <Button size="lg" className="h-12 px-8 text-base font-semibold" asChild>
+                  <Link href="/order">Get Your TapOnce Card</Link>
                 </Button>
                 <Button size="lg" variant="outline" className="text-base rounded-full" asChild>
                   <Link href="/business">Explore for Business</Link>
@@ -76,7 +76,7 @@ export default function Home() {
               <PhoneMockup>
                 <div className="flex flex-col h-full bg-[#f8f9fa] overflow-y-auto hide-scrollbar">
                   {/* Mockup Profile Content */}
-                  <div className="h-40 bg-gradient-to-br from-blue-100 to-indigo-100"></div>
+                  <div className="h-40 bg-gradient-to-br from-[#0da5ad]/20 to-[#051f44]/20"></div>
                   <div className="px-6 pb-6 -mt-16">
                     <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-sm mx-auto mb-4 flex items-center justify-center">
                       <span className="text-gray-400 text-sm">Photo</span>
@@ -86,7 +86,7 @@ export default function Home() {
                       <p className="text-gray-600 font-medium">CEO / Founder</p>
                     </div>
                     <div className="flex flex-col gap-3">
-                      <Button className="w-full rounded-full bg-blue-600 hover:bg-blue-700">Save Contact</Button>
+                      <Button className="w-full rounded-full bg-accent hover:bg-accent-hover text-white">Save Contact</Button>
                       <div className="grid grid-cols-2 gap-3 mt-4">
                         <Button variant="outline" className="rounded-xl h-14 flex flex-col gap-1 items-center justify-center text-xs">
                           <Phone className="h-4 w-4" /> Call
@@ -245,8 +245,8 @@ export default function Home() {
             </Card>
             <Card className="flex flex-col">
               <div className="h-48 bg-gray-100 rounded-t-xl m-2 mb-0 flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-900 to-indigo-800"></div>
-                <span className="relative z-10 font-bold text-white/50">Logo Here</span>
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#051f44] to-[#0da5ad]"></div>
+                <span className="relative z-10 font-bold text-white/70">Custom Logo</span>
               </div>
               <CardHeader>
                 <CardTitle className="text-xl">TapOnce Custom</CardTitle>

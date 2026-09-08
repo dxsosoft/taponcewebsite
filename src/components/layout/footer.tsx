@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Link as LinkIcon } from "lucide-react"
 
 export function Footer() {
@@ -7,8 +8,15 @@ export function Footer() {
       <div className="container mx-auto px-4 md:px-6 py-12 max-w-7xl">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
           <div className="col-span-2 lg:col-span-2">
-            <Link href="/" className="flex items-center space-x-2 mb-4">
-              <span className="font-bold text-xl tracking-tight">TapOnce</span>
+            <Link href="/" className="flex items-center mb-4">
+              <Image 
+                src="/Taponce_logo.png" 
+                alt="TapOnce" 
+                width={180} 
+                height={48} 
+                className="h-10 w-auto object-contain" 
+                unoptimized
+              />
             </Link>
             <p className="text-sm text-muted mb-6 max-w-xs">
               One Tap. Endless Connections. Your professional identity, instantly shared.
