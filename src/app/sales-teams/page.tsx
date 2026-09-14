@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, Target, PhoneCall, FileText, CheckCircle2, BarChart2, Zap, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { SalesTeamsHeroButtons } from "@/components/sales-teams-hero-buttons"
 
 export default function SalesTeamsPage() {
   return (
@@ -24,14 +25,7 @@ export default function SalesTeamsPage() {
             <p className="text-xl text-muted mb-10 max-w-2xl">
               Turn field networking into measurable pipeline revenue. Empower your sales reps to capture verified leads, share product collateral, and close deals faster with 1-tap NFC technology.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Button size="lg" className="h-12 px-8 text-base font-semibold" asChild>
-                <Link href="/contact">Get Sales Team Demo</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base border-accent text-accent hover:bg-accent hover:text-white" asChild>
-                <Link href="/pricing">View Team Pricing</Link>
-              </Button>
-            </div>
+            <SalesTeamsHeroButtons />
           </div>
         </Section>
 

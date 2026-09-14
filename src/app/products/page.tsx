@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { CheckCircle2, ChevronDown, Sparkles } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { SmartCardVisual } from "@/components/ui/smart-card-visual"
 
 export default function ProductsPage() {
   return (
@@ -27,142 +28,181 @@ export default function ProductsPage() {
         <Section className="py-24">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             
-            {/* Essential */}
-            <Card className="flex flex-col relative overflow-hidden group hover:shadow-xl transition-shadow duration-300">
-              <div className="h-56 m-2 mb-0 rounded-t-xl overflow-hidden relative group-hover:opacity-95 transition-opacity">
-                <Image 
-                  src="/images/cards/essential.jpg" 
-                  alt="TapOnce Essential PVC NFC Card" 
-                  fill 
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  unoptimized
-                />
-              </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">Essential</CardTitle>
-                <CardDescription>Affordable PVC card for everyday networking.</CardDescription>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">₹499</span>
+            {/* 1. Essential PVC Card - Clean minimal soft off-white/gray surface (fixed in both light and dark themes) */}
+            <Card className="flex flex-col relative overflow-hidden bg-slate-100 text-slate-900 border border-slate-300 rounded-3xl shadow-sm group transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-lg hover:shadow-slate-400/10 hover:border-slate-400 active:scale-[0.99] active:translate-y-0 cursor-pointer">
+              <div className="p-4 pt-10 pb-3 flex justify-center items-center">
+                <div className="w-full max-w-[270px]">
+                  <SmartCardVisual 
+                    slug="essential" 
+                    colorId="white" 
+                    size="md" 
+                    fullName="Aryan Sharma" 
+                    designation="Product Designer" 
+                    interactive={false} 
+                  />
                 </div>
-                <div className="text-sm text-muted">One-time payment</div>
+              </div>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-2xl font-bold text-slate-900">Essential</CardTitle>
+                <CardDescription className="text-xs text-slate-900 mt-1">Affordable PVC card for everyday networking.</CardDescription>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold text-slate-900">₹499</span>
+                </div>
+                <div className="text-xs text-slate-900">One-time payment • No subscription</div>
               </CardHeader>
-              <CardContent className="flex-1">
-                <ul className="space-y-3 mt-4">
+              <CardContent className="flex-1 pt-2">
+                <ul className="space-y-3 mt-2">
                   {["Premium PVC Smart Card", "Free Digital Profile", "QR Code on Back", "Unlimited Taps", "Standard Support", "White or Black Options"].map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
+                    <li key={i} className="flex items-start gap-2 text-xs text-slate-900">
                       <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
-                      <span>{item}</span>
+                      <span className="text-slate-900">{item}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
-              <CardFooter className="pt-6">
-                <Button className="w-full h-12 text-base" asChild><Link href="/products/essential">View Details</Link></Button>
+              <CardFooter className="pt-4 pb-6">
+                <Button 
+                  className="w-full h-12 text-sm font-semibold bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white transition-all duration-200 shadow-sm hover:shadow-md rounded-xl" 
+                  asChild
+                >
+                  <Link href="/products/essential">View Details</Link>
+                </Button>
               </CardFooter>
             </Card>
 
-            {/* Premium */}
-            <Card className="flex flex-col border-accent/30 shadow-md relative overflow-hidden group hover:shadow-xl transition-shadow duration-300">
-              <div className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-lg rounded-tr-xl z-20 flex items-center gap-1 shadow-sm">
+            {/* 2. Premium Matte Card - Elevated light teal gradient / dark navy-teal glow */}
+            <Card className="flex flex-col relative overflow-hidden rounded-3xl border-2 border-teal-500/40 bg-gradient-to-br from-teal-50 via-cyan-50 to-teal-100 dark:bg-gradient-to-b dark:from-[#06182c] dark:via-[#0b223a] dark:to-[#072b33] dark:border-accent/50 shadow-md shadow-teal-600/10 dark:shadow-none transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-[0_15px_35px_rgba(0,105,92,0.25)] hover:border-teal-500 active:scale-[0.99] active:translate-y-0 group cursor-pointer">
+              <div className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-xl rounded-tr-2xl z-20 flex items-center gap-1 shadow-md">
                 <Sparkles className="h-3 w-3" /> POPULAR
               </div>
-              <div className="h-56 m-2 mb-0 rounded-t-xl overflow-hidden relative group-hover:opacity-95 transition-opacity">
-                <Image 
-                  src="/images/cards/premium.jpg" 
-                  alt="TapOnce Premium Matte NFC Card" 
-                  fill 
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  unoptimized
-                />
-              </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">Premium</CardTitle>
-                <CardDescription>Premium printed card with matte finish.</CardDescription>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">₹999</span>
+              <div className="p-4 pt-10 pb-3 flex justify-center items-center">
+                <div className="w-full max-w-[270px]">
+                  <SmartCardVisual 
+                    slug="premium" 
+                    colorId="black" 
+                    size="md" 
+                    fullName="Alexander Chen" 
+                    designation="Director of Innovation" 
+                    interactive={false} 
+                  />
                 </div>
-                <div className="text-sm text-muted">One-time payment</div>
+              </div>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-2xl font-bold text-foreground">Premium</CardTitle>
+                <CardDescription className="text-xs text-muted mt-1">Premium printed card with silky matte finish.</CardDescription>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold text-foreground">₹999</span>
+                </div>
+                <div className="text-xs text-muted">One-time payment • No subscription</div>
               </CardHeader>
-              <CardContent className="flex-1">
-                <ul className="space-y-3 mt-4">
+              <CardContent className="flex-1 pt-2">
+                <ul className="space-y-3 mt-2">
                   {["Premium Matte Finish", "Free Digital Profile", "QR Code on Back", "Unlimited Taps", "Priority Support", "Custom Name Printing"].map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
+                    <li key={i} className="flex items-start gap-2 text-xs text-foreground font-medium">
                       <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
-                      <span className="font-medium text-foreground">{item}</span>
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
-              <CardFooter className="pt-6">
-                <Button className="w-full h-12 text-base" asChild><Link href="/products/premium">View Details</Link></Button>
+              <CardFooter className="pt-4 pb-6">
+                <Button 
+                  className="w-full h-12 text-sm font-bold bg-accent hover:bg-accent-hover text-white transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_20px_rgba(0,105,92,0.5)] shadow-md rounded-xl" 
+                  asChild
+                >
+                  <Link href="/products/premium">View Details</Link>
+                </Button>
               </CardFooter>
             </Card>
 
-            {/* Metal */}
-            <Card className="flex flex-col relative overflow-hidden bg-gray-950 text-white border-gray-800 group hover:shadow-xl transition-shadow duration-300 hover:border-gray-700">
-              <div className="h-56 m-2 mb-0 rounded-t-xl overflow-hidden relative group-hover:opacity-95 transition-opacity">
-                <Image 
-                  src="/images/cards/metal.jpg" 
-                  alt="TapOnce Metal Stainless Steel NFC Card" 
-                  fill 
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  unoptimized
-                />
+            {/* 3. Stainless Metal Card - Royal metallic brushed steel (IDENTICAL in light and dark mode, no dark: variants) */}
+            <Card className="flex flex-col relative overflow-hidden rounded-3xl border border-zinc-700/90 bg-gradient-to-br from-[#1c1d22] via-[#2d2f38] to-[#121316] text-white shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-[0_15px_40px_rgba(212,212,216,0.2)] hover:border-zinc-500 active:scale-[0.99] active:translate-y-0 group cursor-pointer">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-zinc-700 to-zinc-800 text-zinc-200 border-b border-l border-zinc-600/80 text-[10px] font-bold px-3.5 py-1 rounded-bl-xl rounded-tr-2xl z-20 flex items-center gap-1 shadow-inner">
+                <Sparkles className="h-3 w-3 text-zinc-300" /> EXECUTIVE
               </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">Metal</CardTitle>
-                <CardDescription className="text-gray-400">Premium metal NFC card for executives.</CardDescription>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">₹3499</span>
+              <div className="p-4 pt-10 pb-3 flex justify-center items-center">
+                <div className="w-full max-w-[270px]">
+                  <SmartCardVisual 
+                    slug="metal" 
+                    colorId="silver" 
+                    size="md" 
+                    fullName="Marcus Vance" 
+                    designation="Managing Partner" 
+                    interactive={false} 
+                  />
                 </div>
-                <div className="text-sm text-gray-400">One-time payment</div>
+              </div>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-2xl font-bold text-white">Metal</CardTitle>
+                <CardDescription className="text-xs text-zinc-400 mt-1">24g heavy stainless steel card with laser engraving.</CardDescription>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold text-white">₹3,499</span>
+                </div>
+                <div className="text-xs text-zinc-400">One-time payment • Lifetime guarantee</div>
               </CardHeader>
-              <CardContent className="flex-1">
-                <ul className="space-y-3 mt-4">
+              <CardContent className="flex-1 pt-2">
+                <ul className="space-y-3 mt-2">
                   {["Heavyweight Stainless Steel", "Laser Engraved Details", "Free Digital Profile", "QR Code on Back", "VIP 24/7 Support", "Matte Black or Brushed Steel"].map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                    <li key={i} className="flex items-start gap-2 text-xs text-zinc-300">
                       <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
-              <CardFooter className="pt-6">
-                <Button variant="outline" className="w-full h-12 text-base bg-white text-black hover:bg-gray-200 border-none" asChild><Link href="/products/metal">View Details</Link></Button>
+              <CardFooter className="pt-4 pb-6">
+                <Button 
+                  className="w-full h-12 text-sm font-bold bg-gradient-to-r from-zinc-200 via-white to-zinc-200 hover:from-white hover:to-zinc-100 text-zinc-950 transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_20px_rgba(255,255,255,0.45)] border border-zinc-400 rounded-xl" 
+                  asChild
+                >
+                  <Link href="/products/metal">View Details</Link>
+                </Button>
               </CardFooter>
             </Card>
 
-            {/* Custom / Corporate */}
-            <Card className="flex flex-col relative overflow-hidden group hover:shadow-xl transition-shadow duration-300">
-              <div className="h-56 m-2 mb-0 rounded-t-xl overflow-hidden relative group-hover:opacity-95 transition-opacity">
-                <Image 
-                  src="/images/cards/corporate.jpg" 
-                  alt="TapOnce Corporate Custom Branded NFC Cards" 
-                  fill 
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  unoptimized
-                />
+            {/* 4. Custom / Corporate Card - Custom enterprise tier (Indigo-Purple in light, deep midnight indigo in dark) */}
+            <Card className="flex flex-col relative overflow-hidden rounded-3xl border-2 border-indigo-200/90 bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:bg-gradient-to-b dark:from-[#090e1c] dark:via-[#0f172a] dark:to-[#171630] dark:border-indigo-900/60 shadow-md shadow-indigo-950/10 dark:shadow-none transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-[0_15px_35px_rgba(99,102,241,0.22)] hover:border-indigo-400 dark:hover:border-indigo-500 active:scale-[0.99] active:translate-y-0 group cursor-pointer">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-slate-800 to-indigo-950 dark:from-indigo-600 dark:to-slate-800 text-white text-[10px] font-bold px-3.5 py-1 rounded-bl-xl rounded-tr-2xl z-20 flex items-center gap-1 shadow-md">
+                <Sparkles className="h-3 w-3 text-indigo-300" /> ENTERPRISE
               </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">Corporate</CardTitle>
-                <CardDescription>Fully branded corporate cards for your team.</CardDescription>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-accent">Custom Pricing</span>
+              <div className="p-4 pt-10 pb-3 flex justify-center items-center">
+                <div className="w-full max-w-[270px]">
+                  <SmartCardVisual 
+                    slug="corporate" 
+                    colorId="custom" 
+                    size="md" 
+                    fullName="John Smith" 
+                    designation="VP of Engineering" 
+                    interactive={false} 
+                  />
                 </div>
-                <div className="text-sm text-muted">Volume discounts available</div>
+              </div>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-2xl font-bold text-foreground">Corporate</CardTitle>
+                <CardDescription className="text-xs text-muted mt-1">Fully branded corporate cards for your team.</CardDescription>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-3xl font-extrabold text-accent">Custom Pricing</span>
+                </div>
+                <div className="text-xs text-muted">Volume discounts from 10+ cards</div>
               </CardHeader>
-              <CardContent className="flex-1">
-                <ul className="space-y-3 mt-4">
+              <CardContent className="flex-1 pt-2">
+                <ul className="space-y-3 mt-2">
                   {["Custom Front & Back Design", "Full Color Company Branding", "Centralized Team Dashboard", "Lead Capture Export", "Dedicated Account Manager", "Bulk Provisioning"].map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
+                    <li key={i} className="flex items-start gap-2 text-xs text-foreground/90">
                       <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 shrink-0" />
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
-              <CardFooter className="pt-6">
-                <Button variant="outline" className="w-full h-12 text-base border-accent text-accent hover:bg-accent hover:text-white" asChild><Link href="/products/corporate">View Details</Link></Button>
+              <CardFooter className="pt-4 pb-6">
+                <Button 
+                  variant="outline" 
+                  className="w-full h-12 text-sm font-bold border-2 border-indigo-600 dark:border-accent text-indigo-700 dark:text-accent hover:bg-indigo-600 hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_18px_rgba(99,102,241,0.35)] rounded-xl" 
+                  asChild
+                >
+                  <Link href="/products/corporate">View Details</Link>
+                </Button>
               </CardFooter>
             </Card>
             
@@ -178,22 +218,22 @@ export default function ProductsPage() {
             </div>
             
             <div className="grid md:grid-cols-4 gap-6 text-center">
-              <div className="bg-surface p-6 rounded-2xl shadow-sm border border-border flex flex-col items-center">
+              <div className="bg-surface p-6 rounded-2xl shadow-sm border border-border flex flex-col items-center transition-transform duration-200 hover:-translate-y-1">
                 <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center text-accent font-bold text-xl mb-4">1</div>
                 <h4 className="font-semibold mb-2">Order your card</h4>
                 <p className="text-sm text-muted">Select your card style and complete the checkout.</p>
               </div>
-              <div className="bg-surface p-6 rounded-2xl shadow-sm border border-border flex flex-col items-center">
+              <div className="bg-surface p-6 rounded-2xl shadow-sm border border-border flex flex-col items-center transition-transform duration-200 hover:-translate-y-1">
                 <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center text-accent font-bold text-xl mb-4">2</div>
                 <h4 className="font-semibold mb-2">Create profile</h4>
                 <p className="text-sm text-muted">While your card ships, build your digital profile online.</p>
               </div>
-              <div className="bg-surface p-6 rounded-2xl shadow-sm border border-border flex flex-col items-center">
+              <div className="bg-surface p-6 rounded-2xl shadow-sm border border-border flex flex-col items-center transition-transform duration-200 hover:-translate-y-1">
                 <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center text-accent font-bold text-xl mb-4">3</div>
                 <h4 className="font-semibold mb-2">Activate</h4>
                 <p className="text-sm text-muted">Receive your card and tap it to instantly link to your profile.</p>
               </div>
-              <div className="bg-surface p-6 rounded-2xl shadow-sm border border-border flex flex-col items-center">
+              <div className="bg-surface p-6 rounded-2xl shadow-sm border border-border flex flex-col items-center transition-transform duration-200 hover:-translate-y-1">
                 <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center text-accent font-bold text-xl mb-4">4</div>
                 <h4 className="font-semibold mb-2">Connect</h4>
                 <p className="text-sm text-muted">Start tapping to share your identity with anyone, anywhere.</p>

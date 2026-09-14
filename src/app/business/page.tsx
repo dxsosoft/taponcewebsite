@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle2, ShieldCheck, Users, BarChart3, Zap, Layers, Globe, ArrowRight, Building2, Sparkles } from "lucide-react"
 import Link from "next/link"
+import { BusinessHeroButtons } from "@/components/business-hero-buttons"
 
 export default function BusinessPage() {
   return (
@@ -24,14 +25,7 @@ export default function BusinessPage() {
             <p className="text-xl text-muted mb-10 max-w-2xl">
               Empower your entire company with smart NFC business cards. Manage brand identity, track networking analytics, and update employee details instantly from a centralized dashboard.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Button size="lg" className="h-12 px-8 text-base font-semibold" asChild>
-                <Link href="/contact">Book Enterprise Demo</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base border-accent text-accent hover:bg-accent hover:text-white" asChild>
-                <Link href="/products/corporate">Explore Custom Cards</Link>
-              </Button>
-            </div>
+            <BusinessHeroButtons />
           </div>
         </Section>
 

@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --color-primary: #0da5ad;
-  --color-primary-hover: #08878e;
+  --color-primary: #00695C;
+  --color-primary-hover: #004d40;
   --color-primary-foreground: #ffffff;
   
-  --color-accent: #0da5ad;
-  --color-accent-hover: #08878e;
+  --color-accent: #00695C;
+  --color-accent-hover: #004d40;
   
   --color-navy: #051f44;
   --color-navy-hover: #03142e;
@@ -25,7 +27,67 @@
   --radius-xl: 1.25rem; /* 20px */
 }
 
+.dark {
+  --color-background: #0a0e1a;
+  --color-foreground: #f4f4f5;
+  
+  --color-surface: #111827;
+  --color-surface-hover: #1e293b;
+  --color-border: #1e293b;
+  --color-muted: #94a3b8;
+  
+  --color-navy: #0f1c32;
+  --color-navy-hover: #172844;
+  
+  --color-primary: #26a69a;
+  --color-primary-hover: #00695C;
+  --color-primary-foreground: #ffffff;
+  
+  --color-accent: #26a69a;
+  --color-accent-hover: #00695C;
+}
+
 body {
   background: var(--color-background);
   color: var(--color-foreground);
+}
+
+/* Theme Toggle Glow Effect */
+.theme-toggle-btn {
+  position: relative;
+  border-radius: 9999px;
+  transition: all 250ms ease;
+}
+
+.theme-toggle-btn::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+  opacity: 0;
+  transition: opacity 250ms ease, filter 250ms ease;
+  z-index: 0;
+}
+
+.theme-toggle-btn:hover::before {
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.45));
+}
+
+.theme-toggle-btn:hover {
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.3);
+}
+
+.dark .theme-toggle-btn::before {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.dark .theme-toggle-btn:hover::before {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.5));
+}
+
+.dark .theme-toggle-btn:hover {
+  box-shadow: 0 0 18px rgba(99, 102, 241, 0.35);
 }

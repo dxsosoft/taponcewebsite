@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, QrCode, Share2, Sparkles, Trophy, Users2, ArrowRight, Zap, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
+import { EventsHeroButtons } from "@/components/events-hero-buttons"
 
 export default function EventsPage() {
   return (
@@ -24,14 +25,7 @@ export default function EventsPage() {
             <p className="text-xl text-muted mb-10 max-w-2xl">
               Transform attendee networking at summits, expos, and corporate conferences. Replace disposable paper badges with reusable smart NFC badges and instant digital contact exchange.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Button size="lg" className="h-12 px-8 text-base font-semibold" asChild>
-                <Link href="/contact">Request Event Proposal</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base border-accent text-accent hover:bg-accent hover:text-white" asChild>
-                <Link href="/products">Explore Smart Badges</Link>
-              </Button>
-            </div>
+            <EventsHeroButtons />
           </div>
         </Section>
 

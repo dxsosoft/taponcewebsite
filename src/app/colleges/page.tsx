@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { GraduationCap, Award, BookOpen, UserCheck, Shield, Sparkles, CheckCircle2, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { CollegesHeroButtons } from "@/components/colleges-hero-buttons"
 
 export default function CollegesPage() {
   return (
@@ -24,14 +25,7 @@ export default function CollegesPage() {
             <p className="text-xl text-muted mb-10 max-w-2xl">
               Modernize campus identity cards, streamline placement cell networking, and connect alumni networks with smart NFC Student IDs & digital portfolios.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Button size="lg" className="h-12 px-8 text-base font-semibold" asChild>
-                <Link href="/contact">Schedule Campus Trial</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base border-accent text-accent hover:bg-accent hover:text-white" asChild>
-                <Link href="/products/corporate">View University Cards</Link>
-              </Button>
-            </div>
+            <CollegesHeroButtons />
           </div>
         </Section>
 

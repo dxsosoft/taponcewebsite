@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, UserPlus, ShieldAlert, Sparkles, HeartHandshake, FileCheck, CheckCircle2, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { HrHeroButtons } from "@/components/hr-hero-buttons"
 
 export default function HRPage() {
   return (
@@ -24,14 +25,7 @@ export default function HRPage() {
             <p className="text-xl text-muted mb-10 max-w-2xl">
               Elevate the new hire experience from Day 1. Automate digital business card issuance, simplify directory management, and streamline employee offboarding effortlessly.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Button size="lg" className="h-12 px-8 text-base font-semibold" asChild>
-                <Link href="/contact">Schedule HR Demo</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base border-accent text-accent hover:bg-accent hover:text-white" asChild>
-                <Link href="/products/corporate">View Corporate Cards</Link>
-              </Button>
-            </div>
+            <HrHeroButtons />
           </div>
         </Section>
 

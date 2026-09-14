@@ -19,7 +19,7 @@ export function PhoneMockup({ children, className }: { children: React.ReactNode
       <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[11px] top-[124px] rounded-s-lg"></div>
       <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[11px] top-[178px] rounded-s-lg"></div>
       <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[11px] top-[142px] rounded-e-lg"></div>
-      <div className="rounded-[2rem] overflow-hidden w-full h-full bg-white relative z-10">
+      <div className="rounded-[2rem] overflow-hidden w-full h-full bg-surface relative z-10">
         {children}
       </div>
     </motion.div>

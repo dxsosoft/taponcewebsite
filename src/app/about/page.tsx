@@ -1,10 +1,9 @@
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
-import { Button } from "@/components/ui/button"
 import { Mail, Phone, MapPin, Building2, Users2, Globe2 } from "lucide-react"
-import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
+import { AboutCtaButtons } from "@/components/about-cta-buttons"
 
 export default function AboutPage() {
   return (
@@ -34,23 +33,25 @@ export default function AboutPage() {
                 We set out to build a platform that bridges the gap between the physical handshake and the digital connection. By leveraging NFC technology and cloud-based digital identities, TapOnce ensures that your professional information is always up-to-date, always accessible, and never thrown away.
               </p>
             </div>
-            <div className="bg-gray-100 rounded-3xl h-full min-h-[400px] flex items-center justify-center p-8 relative overflow-hidden">
-               <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-50"></div>
+            <div className="bg-surface-hover border border-border rounded-3xl h-full min-h-[400px] flex items-center justify-center p-8 relative overflow-hidden transition-all duration-300 hover:bg-teal-100 dark:hover:bg-teal-900/30">
+               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/5"></div>
                <div className="relative z-10 grid grid-cols-2 gap-4 w-full">
-                 <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center text-center gap-3">
-                   <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><Users2 className="h-6 w-6"/></div>
-                   <div className="font-bold text-2xl text-gray-900">10k+</div>
-                   <div className="text-sm text-gray-500 font-medium">Active Users</div>
+                 <div className="bg-surface border border-border/60 rounded-xl shadow-sm p-6 flex flex-col items-center text-center gap-3 transition-all duration-300 hover:-translate-y-1">
+                   <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center"><Users2 className="h-6 w-6"/></div>
+                   <div className="font-bold text-2xl text-foreground">10k+</div>
+                   <div className="text-sm text-muted font-medium">Active Users</div>
                  </div>
-                 <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center text-center gap-3 translate-y-8">
-                   <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center"><Building2 className="h-6 w-6"/></div>
-                   <div className="font-bold text-2xl text-gray-900">500+</div>
-                   <div className="text-sm text-gray-500 font-medium">Companies</div>
+                 <div className="translate-y-8">
+                   <div className="bg-surface border border-border/60 rounded-xl shadow-sm p-6 flex flex-col items-center text-center gap-3 transition-all duration-300 hover:-translate-y-1">
+                     <div className="w-12 h-12 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center"><Building2 className="h-6 w-6"/></div>
+                     <div className="font-bold text-2xl text-foreground">500+</div>
+                     <div className="text-sm text-muted font-medium">Companies</div>
+                   </div>
                  </div>
-                 <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center text-center gap-3">
-                   <div className="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><Globe2 className="h-6 w-6"/></div>
-                   <div className="font-bold text-2xl text-gray-900">1M+</div>
-                   <div className="text-sm text-gray-500 font-medium">Connections</div>
+                 <div className="bg-surface border border-border/60 rounded-xl shadow-sm p-6 flex flex-col items-center text-center gap-3 transition-all duration-300 hover:-translate-y-1">
+                   <div className="w-12 h-12 rounded-full bg-purple-500/10 text-purple-500 flex items-center justify-center"><Globe2 className="h-6 w-6"/></div>
+                   <div className="font-bold text-2xl text-foreground">1M+</div>
+                   <div className="text-sm text-muted font-medium">Connections</div>
                  </div>
                </div>
             </div>
@@ -90,14 +91,7 @@ export default function AboutPage() {
             </div>
             
             <div className="mt-12 text-center flex flex-col items-center">
-               <div className="flex gap-4">
-                 <Button size="lg" asChild>
-                   <Link href="/products">Get Your Card</Link>
-                 </Button>
-                 <Button size="lg" variant="outline" asChild>
-                   <Link href="/contact">Send a Message</Link>
-                 </Button>
-               </div>
+              <AboutCtaButtons />
             </div>
           </div>
         </Section>
