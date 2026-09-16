@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json(
         {
           success: false,
-          error: `No order found matching "${orderId}". Please verify your Order ID or phone number.`,
+          error: "No order found with that ID or phone number. Please check and try again, or contact support.",
         },
         { status: 404 }
       )
@@ -45,7 +45,8 @@ export async function GET(
 
     const cardVariant = CARD_VARIANTS.find((v) => v.id === order.cardModel)
     const colorObj = cardVariant?.colors.find((c) => c.id === order.cardColor)
-    const cardName = `${cardVariant?.name || "TapOnce NFC Card"} (${colorObj?.name || order.cardColor})`
+    const colorName = colorObj?.name || (order.cardColor === "teal" ? "Signature Teal" : order.cardColor ? order.cardColor.charAt(0).toUpperCase() + order.cardColor.slice(1) : "Standard")
+    const cardName = `${cardVariant?.name || "TapOnce NFC Card"} • ${colorName}`
 
     const orderCreatedDate = new Date(order.createdAt)
     const formattedDate = orderCreatedDate.toLocaleDateString("en-IN", {
@@ -67,40 +68,40 @@ export async function GET(
     // Build realistic timeline based on status
     const isPaid = order.status === "paid"
     const isCod = order.status === "cod_pending"
-    const isShipped = order.status === "shipped" || order.status === "delivered"
+    const isShipped = order.status === "shipped"
     const isDelivered = order.status === "delivered"
     const isFailed = order.status === "payment_failed"
 
     let statusDisplay = "Confirmed"
-    if (isPaid) statusDisplay = "Payment Verified & Processing"
-    else if (isCod) statusDisplay = "COD Order Placed"
-    else if (isShipped) statusDisplay = "In Transit"
-    else if (isDelivered) statusDisplay = "Delivered"
+    if (isDelivered) statusDisplay = "Delivered"
+    else if (isShipped) statusDisplay = "Out for Delivery / Dispatched"
+    else if (isPaid) statusDisplay = "Payment Confirmed & Processing"
+    else if (isCod) statusDisplay = "COD Order Placed & Confirmed"
     else if (isFailed) statusDisplay = "Payment Failed"
     else if (order.status === "cancelled") statusDisplay = "Cancelled"
 
     const timeline = [
       {
-        title: isCod ? "Order Placed (Cash on Delivery)" : "Order Placed & Payment Verified",
+        title: "Order Placed & Payment Confirmed",
         date: formattedDate,
         done: isPaid || isCod || isShipped || isDelivered,
         icon: "check",
       },
       {
-        title: "Card Printing & NFC Chip Encoded",
-        date: isPaid || isCod ? "In Progress" : "Pending Payment",
+        title: "Card Printing & NFC Chip Encoding",
+        date: isDelivered || isShipped ? "Completed" : isPaid || isCod ? "In Progress" : "Pending Confirmation",
         done: isShipped || isDelivered,
         icon: "cpu",
       },
       {
-        title: "Quality Check & Handed to BlueDart Express",
-        date: isShipped || isDelivered ? "Dispatched" : "Scheduled",
+        title: "Quality Check & Dispatched",
+        date: isDelivered || isShipped ? "Dispatched" : "Scheduled",
         done: isShipped || isDelivered,
         icon: "truck",
       },
       {
-        title: "Out for Delivery",
-        date: isDelivered ? "Delivered" : `Expected ${formattedEstimatedDelivery}`,
+        title: "Out for Delivery / Delivered",
+        date: isDelivered ? "Delivered" : isShipped ? "Out for Delivery" : `Expected ${formattedEstimatedDelivery}`,
         done: isDelivered,
         icon: "package",
       },
