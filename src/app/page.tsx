@@ -288,128 +288,13 @@ export default function Home() {
                 <CardDescription className="text-muted">Fully branded corporate cards for teams.</CardDescription>
               </CardHeader>
               <CardFooter className="mt-auto">
-                <Button variant="outline" className="w-full border-2 border-indigo-600 dark:border-accent text-indigo-700 dark:text-accent hover:bg-indigo-600 hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_18px_rgba(99,102,241,0.35)] font-bold" asChild><Link href="/business">Get a Quote</Link></Button>
+                <Button variant="outline" className="w-full border-2 border-indigo-600 dark:border-accent text-indigo-700 dark:text-accent hover:bg-indigo-600 hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_18px_rgba(99,102,241,0.35)] font-bold" asChild><Link href="/contact">Get a Quote</Link></Button>
               </CardFooter>
             </Card>
           </div>
         </Section>
 
-        {/* 7. Business / Corporate */}
-        <Section className="bg-[#111111] text-white">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="flex flex-col gap-6">
-              <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">
-                One Platform.<br /> Your Entire Team.
-              </h2>
-              <p className="text-xl text-gray-400">
-                Manage your organization's digital identities from one place.
-              </p>
-              <div className="grid sm:grid-cols-2 gap-y-4 gap-x-8 my-6">
-                {[
-                  "Centralized Management", "Brand Control", 
-                  "Employee Profiles", "Instant Updates", 
-                  "Team Management", "Lead Capture", 
-                  "Analytics", "Bulk Deployment"
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-gray-300">
-                    <CheckCircle2 className="h-5 w-5 text-accent shrink-0" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <Button size="lg" className="bg-white text-black hover:bg-gray-200 rounded-full" asChild>
-                  <Link href="/contact">Request a Corporate Demo</Link>
-                </Button>
-              </div>
-            </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
-              <div className="flex items-center justify-between mb-6 border-b border-gray-800 pb-4">
-                <div className="font-bold text-lg flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-accent"></div>
-                  Workspace
-                </div>
-                <div className="flex gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-800"></div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="text-gray-400 text-sm mb-1">Employees</div>
-                  <div className="text-2xl font-bold">248</div>
-                </div>
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="text-gray-400 text-sm mb-1">Active Cards</div>
-                  <div className="text-2xl font-bold">231</div>
-                </div>
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="text-gray-400 text-sm mb-1">Profile Views</div>
-                  <div className="text-2xl font-bold">8,426</div>
-                </div>
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="text-gray-400 text-sm mb-1">Connections</div>
-                  <div className="text-2xl font-bold">1,284</div>
-                </div>
-                <div className="bg-gray-800/50 rounded-xl p-4">
-                  <div className="text-gray-400 text-sm mb-1">Leads Generated</div>
-                  <div className="text-2xl font-bold text-accent">386</div>
-                </div>
-              </div>
-              {/* Chart Placeholder */}
-              <div className="h-32 bg-gray-800/30 rounded-xl border border-gray-800 flex items-end p-4 gap-2">
-                {[40, 70, 45, 90, 65, 100, 80].map((h, i) => (
-                  <div key={i} className="flex-1 bg-accent/40 rounded-t-sm" style={{ height: `${h}%` }}></div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Section>
-
-        {/* 8. Events & 9. Colleges - Split Section */}
-        <Section>
-          <div className="grid md:grid-cols-2 gap-8">
-            <Card className="bg-surface-hover border-none overflow-hidden group">
-              <CardContent className="p-10 flex flex-col items-start gap-6 h-full">
-                <div className="p-4 bg-surface border border-border/60 rounded-2xl shadow-sm">
-                  <Calendar className="h-8 w-8 text-accent" />
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight">Turn Every Introduction Into a Connection</h3>
-                <p className="text-muted mb-4 flex-1">
-                  NFC badges, digital attendee profiles, speaker profiles, exhibitor profiles, QR networking, lead capture, and analytics for your next event.
-                </p>
-                <div className="flex items-center gap-2 text-sm font-medium bg-surface px-4 py-2 rounded-full border border-border shadow-sm mb-4">
-                  Tap <ArrowRight className="h-3 w-3" /> Connect <ArrowRight className="h-3 w-3" /> Capture
-                </div>
-                <Button variant="outline" className="group-hover:bg-accent group-hover:text-white transition-colors" asChild>
-                  <Link href="/events">For Events</Link>
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-surface-hover border-none overflow-hidden group">
-              <CardContent className="p-10 flex flex-col items-start gap-6 h-full">
-                <div className="p-4 bg-surface border border-border/60 rounded-2xl shadow-sm">
-                  <GraduationCap className="h-8 w-8 text-accent" />
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight">The Digital Identity for the Next Generation</h3>
-                <p className="text-muted mb-4 flex-1">
-                  Student digital profiles, placement profiles, resumes, LinkedIn, projects, skills, certifications, and portfolio integration.
-                </p>
-                <div className="grid grid-cols-2 gap-2 w-full mb-4">
-                  <div className="h-2 bg-muted/20 rounded-full w-full"></div>
-                  <div className="h-2 bg-muted/20 rounded-full w-3/4"></div>
-                  <div className="h-2 bg-muted/20 rounded-full w-4/5"></div>
-                  <div className="h-2 bg-muted/20 rounded-full w-5/6"></div>
-                </div>
-                <Button variant="outline" className="group-hover:bg-accent group-hover:text-white transition-colors" asChild>
-                  <Link href="/colleges">For Colleges & Universities</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </Section>
-
-        {/* 10. Lead Generation / Analytics */}
+        {/* Lead Generation / Analytics */}
         <Section className="bg-accent text-white overflow-hidden">
           <div className="grid md:grid-cols-2 gap-16 items-center">
              <div>
@@ -432,7 +317,7 @@ export default function Home() {
                  </div>
                </div>
                <Button size="lg" className="bg-white text-black hover:bg-gray-100 rounded-full" asChild>
-                 <Link href="/business">See How Lead Capture Works</Link>
+                 <Link href="/contact">Contact Sales</Link>
                </Button>
              </div>
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative">
@@ -605,7 +490,7 @@ export default function Home() {
                <p className="text-muted">Custom pricing based on employee count, platform features, branding, and analytics.</p>
              </div>
              <Button size="lg" asChild>
-               <Link href="/business">Get Corporate Pricing</Link>
+               <Link href="/contact">Get Corporate Pricing</Link>
              </Button>
           </div>
         </Section>

@@ -19,7 +19,7 @@ export function HomepageHeroButtons() {
         Get Your TapOnce Card
       </Link>
       <Link 
-        href="/business"
+        href="/products"
         onMouseEnter={() => setBusinessHovered(true)}
         onMouseLeave={() => setBusinessHovered(false)}
         className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg font-semibold h-12 px-8 text-base border transition-all duration-300 shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
@@ -28,7 +28,7 @@ export function HomepageHeroButtons() {
             : "bg-white text-slate-900 border-slate-300"
         }`}
       >
-        Explore for Business
+        Explore All Cards
       </Link>
     </div>
   )

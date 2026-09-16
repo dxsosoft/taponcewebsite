@@ -75,8 +75,8 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-surface">
       <div className="container mx-auto px-4 md:px-6 py-12 max-w-7xl">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-          <div className="col-span-2 lg:col-span-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2 md:col-span-2">
             <Link href="/" className="flex items-center mb-4">
               <Image
                 src="/Taponce_logo.png"
@@ -152,16 +152,6 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-semibold mb-4">Solutions</h4>
-            <ul className="space-y-2 text-sm text-muted">
-              <li><Link href="/business" className="hover:text-foreground transition-colors">Business</Link></li>
-              <li><Link href="/events" className="hover:text-foreground transition-colors">Events</Link></li>
-              <li><Link href="/colleges" className="hover:text-foreground transition-colors">Colleges</Link></li>
-              <li><Link href="/sales-teams" className="hover:text-foreground transition-colors">Sales Teams</Link></li>
-              <li><Link href="/hr" className="hover:text-foreground transition-colors">HR</Link></li>
-            </ul>
-          </div>
 
           <div>
             <h4 className="font-semibold mb-4">Company</h4>
