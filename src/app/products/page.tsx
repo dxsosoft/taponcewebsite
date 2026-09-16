@@ -29,7 +29,7 @@ export default function ProductsPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             
             {/* 1. Essential PVC Card - Clean minimal soft off-white/gray surface (fixed in both light and dark themes) */}
-            <Card className="flex flex-col relative overflow-hidden bg-slate-100 text-slate-900 border border-slate-300 rounded-3xl shadow-sm group transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-lg hover:shadow-slate-400/10 hover:border-slate-400 active:scale-[0.99] active:translate-y-0 cursor-pointer">
+            <Card className="flex flex-col relative overflow-hidden bg-slate-200 text-slate-900 border border-slate-300 rounded-3xl shadow-sm group transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-lg hover:shadow-slate-400/10 hover:border-slate-400 active:scale-[0.99] active:translate-y-0 cursor-pointer">
               <div className="p-4 pt-10 pb-3 flex justify-center items-center">
                 <div className="w-full max-w-[270px]">
                   <SmartCardVisual 
@@ -71,7 +71,7 @@ export default function ProductsPage() {
             </Card>
 
             {/* 2. Premium Matte Card - Elevated light teal gradient / dark navy-teal glow */}
-            <Card className="flex flex-col relative overflow-hidden rounded-3xl border-2 border-teal-500/40 bg-gradient-to-br from-teal-50 via-cyan-50 to-teal-100 dark:bg-gradient-to-b dark:from-[#06182c] dark:via-[#0b223a] dark:to-[#072b33] dark:border-accent/50 shadow-md shadow-teal-600/10 dark:shadow-none transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-[0_15px_35px_rgba(0,105,92,0.25)] hover:border-teal-500 active:scale-[0.99] active:translate-y-0 group cursor-pointer">
+            <Card className="flex flex-col relative overflow-hidden rounded-3xl border-2 border-teal-500/40 bg-gradient-to-br from-teal-100 via-cyan-100 to-teal-200 dark:bg-gradient-to-b dark:from-[#06182c] dark:via-[#0b223a] dark:to-[#072b33] dark:border-accent/50 shadow-md shadow-teal-600/10 dark:shadow-none transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-[0_15px_35px_rgba(0,105,92,0.25)] hover:border-teal-500 active:scale-[0.99] active:translate-y-0 group cursor-pointer">
               <div className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-xl rounded-tr-2xl z-20 flex items-center gap-1 shadow-md">
                 <Sparkles className="h-3 w-3" /> POPULAR
               </div>
@@ -161,7 +161,7 @@ export default function ProductsPage() {
             </Card>
 
             {/* 4. Custom / Corporate Card - Custom enterprise tier (Indigo-Purple in light, deep midnight indigo in dark) */}
-            <Card className="flex flex-col relative overflow-hidden rounded-3xl border-2 border-indigo-200/90 bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:bg-gradient-to-b dark:from-[#090e1c] dark:via-[#0f172a] dark:to-[#171630] dark:border-indigo-900/60 shadow-md shadow-indigo-950/10 dark:shadow-none transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-[0_15px_35px_rgba(99,102,241,0.22)] hover:border-indigo-400 dark:hover:border-indigo-500 active:scale-[0.99] active:translate-y-0 group cursor-pointer">
+            <Card className="flex flex-col relative overflow-hidden rounded-3xl border-2 border-indigo-300/90 bg-gradient-to-br from-indigo-100 via-purple-100 to-indigo-200 dark:bg-gradient-to-b dark:from-[#090e1c] dark:via-[#0f172a] dark:to-[#171630] dark:border-indigo-900/60 shadow-md shadow-indigo-950/10 dark:shadow-none transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] hover:shadow-[0_15px_35px_rgba(99,102,241,0.22)] hover:border-indigo-400 dark:hover:border-indigo-500 active:scale-[0.99] active:translate-y-0 group cursor-pointer">
               <div className="absolute top-0 right-0 bg-gradient-to-r from-slate-800 to-indigo-950 dark:from-indigo-600 dark:to-slate-800 text-white text-[10px] font-bold px-3.5 py-1 rounded-bl-xl rounded-tr-2xl z-20 flex items-center gap-1 shadow-md">
                 <Sparkles className="h-3 w-3 text-indigo-300" /> ENTERPRISE
               </div>

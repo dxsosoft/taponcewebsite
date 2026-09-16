@@ -59,7 +59,7 @@ export function Navbar() {
             />
           </Link>
           
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium translate-y-[2.5px]">
             <Link href="/products" className={getNavLinkClass("/products")}>Products</Link>
             <Link href="/how-it-works" className={getNavLinkClass("/how-it-works")}>How It Works</Link>
             <Link href="/pricing" className={getNavLinkClass("/pricing")}>Pricing</Link>
