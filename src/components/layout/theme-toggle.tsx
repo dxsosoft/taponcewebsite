@@ -29,6 +29,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   return (
     <button
       type="button"
+      suppressHydrationWarning
       onClick={toggleTheme}
       aria-label={label}
       title={label}
