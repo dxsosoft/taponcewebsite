@@ -97,7 +97,7 @@ export function SmartCardVisual({
   colorId,
   fullName = "Aryan Sharma",
   designation = "Product Designer",
-  company = "Design Studio",
+  company: _company = "Design Studio",
   size = "responsive",
   interactive = true,
   className = "",

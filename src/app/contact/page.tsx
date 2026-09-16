@@ -21,7 +21,6 @@ export default function ContactPage() {
   const [num2, setNum2] = React.useState(5)
   const [userAnswer, setUserAnswer] = React.useState("")
   const [captchaError, setCaptchaError] = React.useState("")
-  const [isVerified, setIsVerified] = React.useState(false)
   const [isSubmitted, setIsSubmitted] = React.useState(false)
 
   // Generate new math captcha problem
@@ -50,7 +49,6 @@ export default function ContactPage() {
     e.preventDefault()
     const expected = num1 + num2
     if (parseInt(userAnswer.trim(), 10) === expected) {
-      setIsVerified(true)
       setShowCaptcha(false)
       setIsSubmitted(true)
     } else {

@@ -3,7 +3,7 @@ import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import Link from "next/link"
 import {
   BookOpen,
@@ -18,7 +18,6 @@ import {
   Sparkles,
   Phone,
   Mail,
-  CheckCircle2,
 } from "lucide-react"
 
 export const metadata = {

@@ -1,7 +1,6 @@
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
-import Link from "next/link"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
 import { PRODUCTS } from "@/lib/products"
 import { PricingHeroButtons } from "@/components/pricing-hero-buttons"

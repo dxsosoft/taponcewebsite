@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
-import { Mail, Phone, MapPin, Building2, Users2, Globe2 } from "lucide-react"
+import { Mail, Phone, Building2, Users2, Globe2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { AboutCtaButtons } from "@/components/about-cta-buttons"
 

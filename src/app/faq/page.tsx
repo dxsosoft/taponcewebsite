@@ -5,19 +5,12 @@ import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
 import {
   ChevronDown,
   HelpCircle,
-  CreditCard,
-  Smartphone,
-  Truck,
-  ShieldCheck,
-  Building2,
   Sparkles,
   Phone,
   Mail,
-  ArrowRight,
 } from "lucide-react"
 
 interface FaqItem {

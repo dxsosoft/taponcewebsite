@@ -1,11 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { PhoneMockup } from "@/components/marketing/phone-mockup";
-import { ArrowRight, CheckCircle2, ChevronDown, Smartphone, Globe, Share2, Phone, Mail, Link as LinkIcon, Download, BarChart, RefreshCw, Briefcase, Calendar, GraduationCap, ArrowUpRight } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, Smartphone, Globe, Share2, Phone, Mail, Link as LinkIcon, Download, BarChart, RefreshCw, Briefcase, ArrowUpRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { HeroAnimation } from "@/components/marketing/hero-animation";
 import { HeroTagline } from "@/components/marketing/hero-tagline";

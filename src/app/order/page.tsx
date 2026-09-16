@@ -23,7 +23,6 @@ import {
   Banknote,
   CreditCard,
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
 import { CARD_VARIANTS } from "@/lib/pricing"

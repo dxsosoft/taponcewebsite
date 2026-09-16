@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Phone, Mail, Globe, MapPin, Download, Briefcase, Link as LinkIcon } from "lucide-react"
 import { ProfileAvatar } from "@/components/ui/profile-avatar"
@@ -106,7 +107,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
         
         {/* Footer */}
         <div className="absolute bottom-0 w-full p-6 text-center text-xs text-muted">
-          Powered by <a href="/" className="font-semibold text-foreground hover:text-accent">TapOnce</a>
+          Powered by <Link href="/" className="font-semibold text-foreground hover:text-accent">TapOnce</Link>
         </div>
       </main>
     </div>

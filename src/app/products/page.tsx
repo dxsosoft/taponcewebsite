@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle2, ChevronDown, Sparkles } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
 
 export default function ProductsPage() {
