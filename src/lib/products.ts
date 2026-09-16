@@ -11,8 +11,17 @@ export interface ProductSpecification {
   value: string
 }
 
+export type ProductSlug = "essential" | "premium" | "metal" | "corporate"
+
+export const TIER_BACKGROUNDS: Record<ProductSlug, string> = {
+  essential: "bg-slate-200 text-slate-900 border border-slate-300",
+  premium: "border-2 border-teal-500/40 bg-gradient-to-br from-teal-100 via-cyan-100 to-teal-200 dark:bg-gradient-to-b dark:from-[#06182c] dark:via-[#0b223a] dark:to-[#072b33] dark:border-accent/50 shadow-md shadow-teal-600/10 dark:shadow-none",
+  metal: "border border-zinc-700/90 bg-gradient-to-br from-[#1c1d22] via-[#2d2f38] to-[#121316] text-white shadow-2xl",
+  corporate: "border-2 border-indigo-300/90 bg-gradient-to-br from-indigo-100 via-purple-100 to-indigo-200 dark:bg-gradient-to-b dark:from-[#090e1c] dark:via-[#0f172a] dark:to-[#171630] dark:border-indigo-900/60 shadow-md shadow-indigo-950/10 dark:shadow-none",
+} as const
+
 export interface Product {
-  slug: "essential" | "premium" | "metal" | "corporate"
+  slug: ProductSlug
   name: string
   tagline: string
   price: number
@@ -23,6 +32,7 @@ export interface Product {
   description: string
   longDescription: string
   image: string
+  cardBackground: string
   features: string[]
   specs: ProductSpecification[]
   popular?: boolean
@@ -40,6 +50,7 @@ export const PRODUCTS: Product[] = [
     description: "The perfect entry into digital networking. Made from resilient, water-resistant PVC with an embedded NTAG216 chip and QR code backup.",
     longDescription: "TapOnce Essential is our everyday smart business card built for longevity, affordability, and effortless networking. Simply tap against any modern smartphone to instantly share your digital profile, contact details, social links, and portfolio without requiring any recipient app.",
     image: "/Taponce_logo.png",
+    cardBackground: TIER_BACKGROUNDS.essential,
     features: [
       "Premium Matte PVC finish",
       "Free forever cloud digital profile",
@@ -73,6 +84,7 @@ export const PRODUCTS: Product[] = [
     description: "Elevated executive finish with high-definition custom name and title printing. Engineered for founders, professionals, and sales leaders.",
     longDescription: "Designed for leaders who want to leave a memorable impression. The Premium Matte card features a silky velvet-touch matte coat, precision UV thermal transfer printing with your name and company, and an upgraded NFC antenna for instant 360-degree connectivity.",
     image: "/Taponce_logo_dark.png",
+    cardBackground: TIER_BACKGROUNDS.premium,
     features: [
       "Silky velvet-touch matte finish",
       "High-definition custom name printing",
@@ -106,6 +118,7 @@ export const PRODUCTS: Product[] = [
     description: "Substantial 24-gram stainless steel card with laser-engraved typography and an advanced dual-surface hybrid NFC module.",
     longDescription: "The pinnacle of physical and digital prestige. Milled from a single sheet of surgical-grade stainless steel and hand-finished with brushed steel or matte gunmetal PVD coating. Handing this card over delivers a commanding tactile presence that commands instant respect.",
     image: "/Taponce_logo.png",
+    cardBackground: TIER_BACKGROUNDS.metal,
     features: [
       "Heavyweight 24-gram surgical stainless steel",
       "Permanent fiber-laser etched details",
@@ -139,6 +152,7 @@ export const PRODUCTS: Product[] = [
     description: "End-to-end bespoke cards for companies, sales teams, and institutions. Includes central admin dashboard, CRM sync, and bulk provisioning.",
     longDescription: "Empower your entire team with on-brand smart cards and an enterprise management console. Manage employee digital profiles centrally, sync leads directly into Salesforce / HubSpot, and gain real-time analytics on networking ROI across team events and meetings.",
     image: "/Taponce_logo_dark.png",
+    cardBackground: TIER_BACKGROUNDS.corporate,
     features: [
       "100% custom front & back corporate branding",
       "Centralized admin console for HR & IT teams",

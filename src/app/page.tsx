@@ -11,6 +11,7 @@ import { HeroTagline } from "@/components/marketing/hero-tagline";
 import { HomepageHeroButtons } from "@/components/homepage-hero-buttons";
 import { ProfileAvatar } from "@/components/ui/profile-avatar";
 import { SmartCardVisual } from "@/components/ui/smart-card-visual";
+import { TIER_BACKGROUNDS } from "@/lib/products";
 
 export default function Home() {
   return (
@@ -199,7 +200,7 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* 1. Essential */}
-            <Card className="flex flex-col relative overflow-hidden bg-slate-100 text-slate-900 border border-slate-300 rounded-2xl shadow-sm group transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:border-slate-400">
+            <Card className={`flex flex-col relative overflow-hidden rounded-2xl shadow-sm group transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:border-slate-400 ${TIER_BACKGROUNDS.essential}`}>
               <div className="p-4 pt-9 pb-2 flex justify-center items-center">
                 <div className="w-full max-w-[270px]">
                   <SmartCardVisual 
@@ -222,7 +223,7 @@ export default function Home() {
             </Card>
 
             {/* 2. Premium */}
-            <Card className="flex flex-col relative overflow-hidden border-2 border-teal-500/40 bg-gradient-to-br from-teal-50 via-cyan-50 to-teal-100 dark:bg-gradient-to-b dark:from-[#06182c] dark:via-[#0b223a] dark:to-[#072b33] dark:border-accent/50 shadow-md shadow-teal-600/10 dark:shadow-none rounded-2xl group transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_35px_rgba(0,105,92,0.25)] hover:border-teal-500">
+            <Card className={`flex flex-col relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_35px_rgba(0,105,92,0.25)] hover:border-teal-500 ${TIER_BACKGROUNDS.premium}`}>
               <div className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl z-20">POPULAR</div>
               <div className="p-4 pt-9 pb-2 flex justify-center items-center">
                 <div className="w-full max-w-[270px]">
@@ -246,7 +247,7 @@ export default function Home() {
             </Card>
 
             {/* 3. Metal */}
-            <Card className="flex flex-col relative overflow-hidden border border-zinc-700/90 bg-gradient-to-br from-[#1c1d22] via-[#2d2f38] to-[#121316] text-white shadow-2xl rounded-2xl group transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_40px_rgba(212,212,216,0.2)] hover:border-zinc-500">
+            <Card className={`flex flex-col relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_40px_rgba(212,212,216,0.2)] hover:border-zinc-500 ${TIER_BACKGROUNDS.metal}`}>
               <div className="p-4 pt-9 pb-2 flex justify-center items-center">
                 <div className="w-full max-w-[270px]">
                   <SmartCardVisual 
@@ -269,7 +270,7 @@ export default function Home() {
             </Card>
 
             {/* 4. Custom / Corporate */}
-            <Card className="flex flex-col relative overflow-hidden border-2 border-indigo-200/90 bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:bg-gradient-to-b dark:from-[#090e1c] dark:via-[#0f172a] dark:to-[#171630] dark:border-indigo-900/60 shadow-md shadow-indigo-950/10 dark:shadow-none rounded-2xl group transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_35px_rgba(99,102,241,0.22)] hover:border-indigo-400 dark:hover:border-indigo-500">
+            <Card className={`flex flex-col relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_35px_rgba(99,102,241,0.22)] hover:border-indigo-400 dark:hover:border-indigo-500 ${TIER_BACKGROUNDS.corporate}`}>
               <div className="p-4 pt-9 pb-2 flex justify-center items-center">
                 <div className="w-full max-w-[270px]">
                   <SmartCardVisual 
@@ -410,7 +411,7 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* Essential */}
-            <Card className="flex flex-col relative overflow-hidden bg-slate-100 text-slate-900 border border-slate-300 shadow-sm">
+            <Card className={`flex flex-col relative overflow-hidden shadow-sm ${TIER_BACKGROUNDS.essential}`}>
               <CardHeader>
                 <CardTitle className="text-slate-900">Essential</CardTitle>
                 <CardDescription className="text-slate-900">Perfect for individuals</CardDescription>
@@ -434,7 +435,7 @@ export default function Home() {
             </Card>
 
             {/* Premium */}
-            <Card className="flex flex-col relative overflow-hidden border-2 border-teal-500/40 bg-gradient-to-br from-teal-50 via-cyan-50 to-teal-100 dark:bg-gradient-to-b dark:from-[#06182c] dark:via-[#0b223a] dark:to-[#072b33] dark:border-accent/50 shadow-md shadow-teal-600/10 dark:shadow-none">
+            <Card className={`flex flex-col relative overflow-hidden ${TIER_BACKGROUNDS.premium}`}>
               <div className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
               <CardHeader>
                 <CardTitle>Premium</CardTitle>
@@ -459,7 +460,7 @@ export default function Home() {
             </Card>
 
             {/* Metal */}
-            <Card className="flex flex-col relative overflow-hidden border border-zinc-700/90 bg-gradient-to-br from-[#1c1d22] via-[#2d2f38] to-[#121316] text-white shadow-2xl">
+            <Card className={`flex flex-col relative overflow-hidden ${TIER_BACKGROUNDS.metal}`}>
               <CardHeader>
                 <CardTitle className="text-white">Metal</CardTitle>
                 <CardDescription className="text-zinc-400">For executives</CardDescription>
