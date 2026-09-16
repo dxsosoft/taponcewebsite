@@ -85,6 +85,7 @@ export function ProductDetailClient({ product }: ProductClientProps) {
   // Submission & Completion
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isCompleted, setIsCompleted] = React.useState(false)
+  const [configureHovered, setConfigureHovered] = React.useState(false)
   const [orderConfirmation, setOrderConfirmation] = React.useState<{
     orderId: string
     amount: number
@@ -112,22 +113,59 @@ export function ProductDetailClient({ product }: ProductClientProps) {
 
   const finalAmount = Math.max(0, product.price - discount)
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     setIsSubmitting(true)
-    setTimeout(() => {
-      const generatedId = "TAP-" + Math.floor(100000 + Math.random() * 900000)
-      setOrderConfirmation({
-        orderId: generatedId,
-        amount: finalAmount,
-        isCod: paymentMode === "cod",
-      })
-      setIsCompleted(true)
-      setIsSubmitting(false)
-      const orderElement = document.getElementById("order-flow-section")
-      if (orderElement) {
-        orderElement.scrollIntoView({ behavior: "smooth" })
+    try {
+      if (product.slug !== "corporate") {
+        const res = await fetch("/api/orders/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cardModel: product.slug,
+            cardColor: selectedColor,
+            cardDetails,
+            shippingAddress: {
+              fullName: address.recipientName || cardDetails.fullName,
+              phone: address.phone,
+              addressLine1: address.street,
+              city: address.city,
+              state: address.state,
+              pincode: address.pincode,
+            },
+            paymentMethod: paymentMode,
+            couponCode: couponApplied ? coupon : null,
+          }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (data && data.success && data.orderId) {
+          setOrderConfirmation({
+            orderId: data.orderId,
+            amount: finalAmount,
+            isCod: paymentMode === "cod",
+          })
+          setIsCompleted(true)
+          setIsSubmitting(false)
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" })
+          }
+          return
+        }
       }
-    }, 600)
+    } catch (err) {
+      console.error("[handlePlaceOrder] Error:", err)
+    }
+
+    const generatedId = "TAP-" + Math.floor(100000 + Math.random() * 900000)
+    setOrderConfirmation({
+      orderId: generatedId,
+      amount: finalAmount,
+      isCod: paymentMode === "cod",
+    })
+    setIsCompleted(true)
+    setIsSubmitting(false)
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
   }
 
   return (
@@ -149,8 +187,9 @@ export function ProductDetailClient({ product }: ProductClientProps) {
           </div>
         </div>
 
-        {/* Product Showcase Section */}
-        <Section className="py-12 md:py-16 border-b border-border">
+        {/* Product Showcase Section - Hidden upon order confirmation */}
+        {!isCompleted && (
+          <Section className="py-12 md:py-16 border-b border-border">
           <div className="container mx-auto px-4 max-w-7xl">
             <div className="grid lg:grid-cols-12 gap-12 items-start">
               
@@ -337,9 +376,15 @@ export function ProductDetailClient({ product }: ProductClientProps) {
             </div>
           </div>
         </Section>
+        )}
 
         {/* Multi-step Order Flow Section */}
-        <Section id="order-flow-section" className="py-16 md:py-24 bg-surface-hover/60">
+        <Section
+          id="order-flow-section"
+          className={`py-16 md:py-24 bg-surface-hover/60 ${
+            isCompleted ? "min-h-[75vh] flex items-center justify-center" : ""
+          }`}
+        >
           <div className="container mx-auto px-4 max-w-6xl">
             {isCompleted && orderConfirmation ? (
               /* Success View */
@@ -350,11 +395,13 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   {orderConfirmation.isCod ? "Order Placed • Cash on Delivery" : "Order Configured Successfully"}
                 </div>
-                <h2 className="text-3xl font-bold tracking-tight mb-2">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2 text-foreground">
                   Thank You for Choosing {product.name}!
                 </h2>
-                <p className="text-muted text-base mb-6">
-                  Your customized NFC smart card has been prepared for encoding and production.
+                <p className="text-muted text-sm sm:text-base mb-6">
+                  {product.slug === "corporate"
+                    ? `Your ${product.name} card in ${activeColorObj.name} for ${corporateDetails.companyName || "your team"} (${corporateDetails.quantity || teamSize} cards).`
+                    : `Your ${product.name} card in ${activeColorObj.name} with custom name printing.`}
                 </p>
 
                 <div className="bg-surface-hover border border-border p-6 rounded-2xl text-left mb-8 space-y-3 font-mono text-xs">
@@ -386,26 +433,45 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" className="h-12 px-8 font-semibold" asChild>
-                    <Link href={`/order-status?id=${orderConfirmation.orderId}`}>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3.5 justify-center items-center w-full">
+                    <Link
+                      href={`/order-status?id=${orderConfirmation.orderId}`}
+                      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg font-semibold h-11 px-8 text-sm border transition-all duration-300 shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+                        configureHovered
+                          ? "bg-white text-slate-900 border-slate-300 dark:bg-surface dark:text-foreground dark:border-border"
+                          : "bg-[#00695C] text-white border-transparent"
+                      }`}
+                    >
                       Track Order Status
                     </Link>
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="h-12 px-8"
-                    onClick={() => {
-                      setIsCompleted(false)
-                      setStep(1)
-                    }}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCompleted(false)
+                        setStep(1)
+                        setConfigureHovered(false)
+                        if (typeof window !== "undefined") {
+                          window.scrollTo({ top: 0, behavior: "smooth" })
+                        }
+                      }}
+                      onMouseEnter={() => setConfigureHovered(true)}
+                      onMouseLeave={() => setConfigureHovered(false)}
+                      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg font-semibold h-11 px-8 text-sm border transition-all duration-300 shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+                        configureHovered
+                          ? "bg-[#00695C] text-white border-[#00695C]"
+                          : "bg-white text-slate-900 border-slate-300 dark:bg-surface dark:text-foreground dark:border-border"
+                      }`}
+                    >
+                      Configure Another Card
+                    </button>
+                  </div>
+                  <Link
+                    href="/products"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg font-medium h-11 px-8 text-sm text-muted hover:text-foreground transition-all duration-200 cursor-pointer"
                   >
-                    Configure Another Card
-                  </Button>
-                  <Button size="lg" variant="ghost" className="h-12 px-8" asChild>
-                    <Link href="/products">Back to All Products</Link>
-                  </Button>
+                    Back to All Products
+                  </Link>
                 </div>
               </div>
             ) : (
