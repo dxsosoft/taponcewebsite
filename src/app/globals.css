@@ -91,3 +91,47 @@ body {
 .dark .theme-toggle-btn:hover {
   box-shadow: 0 0 18px rgba(99, 102, 241, 0.35);
 }
+
+/* Interactive UI elements: disable text selection & text caret cursor */
+button,
+[role="button"],
+[role="radio"],
+[role="tab"],
+.card-selectable,
+.interactive-card {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+button *,
+[role="button"] *,
+[role="radio"] *,
+[role="tab"] *,
+.card-selectable *,
+.interactive-card * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Ensure real text input elements retain text selection and I-beam text cursor */
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+[contenteditable="true"],
+[contenteditable=""] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text !important;
+}
+
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"] {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: pointer !important;
+}
+

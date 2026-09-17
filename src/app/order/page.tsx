@@ -24,22 +24,60 @@ import {
   CreditCard,
 } from "lucide-react"
 import Link from "next/link"
+import Script from "next/script"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
 import { CARD_VARIANTS } from "@/lib/pricing"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
 
-function loadRazorpayScript(): Promise<boolean> {
+function loadRazorpayScript(timeoutMs = 6000): Promise<boolean> {
   return new Promise((resolve) => {
-    if (typeof window !== "undefined" && window.Razorpay) {
+    if (typeof window === "undefined") {
+      resolve(false)
+      return
+    }
+    if (window.Razorpay) {
       resolve(true)
       return
     }
+
+    let resolved = false
+
+    const done = (success: boolean) => {
+      if (resolved) return
+      resolved = true
+      clearTimeout(timer)
+      resolve(success)
+    }
+
+    const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
+      console.warn("[Razorpay] Script loading timed out after " + timeoutMs + "ms")
+      done(Boolean(window.Razorpay))
+    }, timeoutMs)
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+    )
+
+    if (existingScript) {
+      if (window.Razorpay) {
+        done(true)
+        return
+      }
+      existingScript.addEventListener("load", () => {
+        setTimeout(() => done(Boolean(window.Razorpay)), 50)
+      })
+      existingScript.addEventListener("error", () => done(false))
+      return
+    }
+
     const script = document.createElement("script")
     script.src = "https://checkout.razorpay.com/v1/checkout.js"
     script.async = true
-    script.onload = () => resolve(true)
-    script.onerror = () => resolve(false)
-    document.body.appendChild(script)
+    script.onload = () => {
+      setTimeout(() => done(Boolean(window.Razorpay)), 50)
+    }
+    script.onerror = () => done(false)
+    document.head.appendChild(script)
   })
 }
 
@@ -108,6 +146,13 @@ export default function OrderPage() {
 
   const finalAmount = Math.max(0, selectedCard.price - discount)
 
+  // Eagerly preload Razorpay script in background when component mounts
+  React.useEffect(() => {
+    loadRazorpayScript().then((ok) => {
+      if (ok) console.log("[OrderPage] Razorpay SDK preloaded successfully")
+    })
+  }, [])
+
   const handleFinalSubmit = async () => {
     try {
       setIsSubmitting(true)
@@ -160,7 +205,7 @@ export default function OrderPage() {
       }
 
       const options: RazorpayOptions = {
-        key: data.keyId,
+        key: data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         amount: data.amount,
         currency: data.currency || "INR",
         name: "TapOnce",
@@ -217,15 +262,19 @@ export default function OrderPage() {
         },
       }
 
-      const razorpayInstance = new window.Razorpay(options)
-      razorpayInstance.on("payment.failed", (failure: any) => {
-        setIsSubmitting(false)
-        setErrorMessage(
-          failure.error?.description || "Payment failed or was declined by your bank. Please retry."
-        )
-      })
-
-      razorpayInstance.open()
+      try {
+        const razorpayInstance = new window.Razorpay(options)
+        razorpayInstance.on("payment.failed", (failure: any) => {
+          setIsSubmitting(false)
+          setErrorMessage(
+            failure.error?.description || "Payment failed or was declined by your bank. Please retry."
+          )
+        })
+        razorpayInstance.open()
+      } catch (openErr: any) {
+        console.error("[OrderPage] Failed to invoke razorpay.open():", openErr)
+        throw new Error(openErr?.message || "Could not launch Razorpay checkout modal. Please retry.")
+      }
     } catch (err: any) {
       console.error("[OrderPage] Checkout error:", err)
       setErrorMessage(err.message || "Something went wrong while processing your order.")
@@ -235,6 +284,11 @@ export default function OrderPage() {
 
   return (
     <>
+      <Script
+        id="razorpay-checkout-sdk"
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="lazyOnload"
+      />
       <Navbar />
       <main className="flex-1 bg-surface-hover py-12 md:py-20 min-h-screen">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -381,11 +435,21 @@ export default function OrderPage() {
                         {CARD_VARIANTS.map((card) => (
                           <div
                             key={card.id}
+                            role="radio"
+                            aria-checked={selectedCardId === card.id}
+                            tabIndex={0}
                             onClick={() => {
                               setSelectedCardId(card.id)
                               setSelectedColor(card.colors[0].id)
                             }}
-                            className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex justify-between items-center ${
+                            onKeyDown={(e) => {
+                              if (e.key === " " || e.key === "Enter") {
+                                e.preventDefault()
+                                setSelectedCardId(card.id)
+                                setSelectedColor(card.colors[0].id)
+                              }
+                            }}
+                            className={`card-selectable select-none cursor-pointer p-5 rounded-2xl border-2 transition-all flex justify-between items-center ${
                               selectedCardId === card.id
                                 ? "border-accent bg-accent/5 shadow-md"
                                 : "border-border hover:border-accent/40 bg-surface"
@@ -428,8 +492,11 @@ export default function OrderPage() {
                           {selectedCard.colors.map((c) => (
                             <button
                               key={c.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={selectedColor === c.id}
                               onClick={() => setSelectedColor(c.id)}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
+                              className={`card-selectable select-none cursor-pointer flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
                                 selectedColor === c.id
                                   ? "border-accent bg-accent/10 text-foreground font-bold"
                                   : "border-border hover:border-muted"
@@ -737,70 +804,88 @@ export default function OrderPage() {
                       <h2 className="text-2xl font-bold">4. Select Payment Method</h2>
 
                       <div className="space-y-3">
-                        {/* Option 1: Razorpay Online (UPI, Cards, NetBanking, Wallets) */}
+                        {/* Option 1: Pay Online */}
                         <div
+                          role="radio"
+                          aria-checked={paymentMode === "online"}
+                          tabIndex={0}
                           onClick={() => setPaymentMode("online")}
-                          className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                          onKeyDown={(e) => {
+                            if (e.key === " " || e.key === "Enter") {
+                              e.preventDefault()
+                              setPaymentMode("online")
+                            }
+                          }}
+                          className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${
                             paymentMode === "online"
-                              ? "border-accent bg-accent/5 shadow-sm"
-                              : "border-border hover:border-accent/40 bg-surface"
+                              ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
+                              : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
                           }`}
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3.5">
                             <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                                 paymentMode === "online"
                                   ? "border-accent bg-accent"
-                                  : "border-muted"
+                                  : "border-muted/50 bg-transparent"
                               }`}
                             >
                               {paymentMode === "online" && (
                                 <div className="w-2 h-2 rounded-full bg-white"></div>
                               )}
                             </div>
-                            <div className="space-y-0.5">
-                              <div className="text-sm font-bold flex items-center gap-2">
+                            <div>
+                              <div className="text-sm font-bold text-foreground flex items-center gap-2">
                                 <CreditCard className="h-4 w-4 text-accent" />
-                                Instant Online Payment (Razorpay)
+                                Pay Online
                               </div>
-                              <div className="text-xs text-muted">
-                                UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards & Net Banking
+                              <div className="text-xs text-muted mt-0.5">
+                                UPI, Cards, NetBanking, Wallets — secure checkout
                               </div>
                             </div>
                           </div>
-                          <span className="text-[11px] font-bold bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded">
-                            FASTEST
+                          <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                            Instant
                           </span>
                         </div>
 
                         {/* Option 2: Cash on Delivery */}
                         <div
+                          role="radio"
+                          aria-checked={paymentMode === "cod"}
+                          tabIndex={0}
                           onClick={() => setPaymentMode("cod")}
-                          className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                          onKeyDown={(e) => {
+                            if (e.key === " " || e.key === "Enter") {
+                              e.preventDefault()
+                              setPaymentMode("cod")
+                            }
+                          }}
+                          className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${
                             paymentMode === "cod"
-                              ? "border-accent bg-accent/5 shadow-sm"
-                              : "border-border hover:border-accent/40 bg-surface"
+                              ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
+                              : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
                           }`}
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3.5">
                             <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                                 paymentMode === "cod"
                                   ? "border-accent bg-accent"
-                                  : "border-muted"
+                                  : "border-muted/50 bg-transparent"
                               }`}
                             >
                               {paymentMode === "cod" && (
                                 <div className="w-2 h-2 rounded-full bg-white"></div>
                               )}
                             </div>
-                            <div className="space-y-0.5">
-                              <div className="text-sm font-bold flex items-center gap-2">
+                            <div>
+                              <div className="text-sm font-bold text-foreground flex items-center gap-2">
                                 <Banknote className="h-4 w-4 text-accent" />
                                 Cash on Delivery (COD)
                               </div>
-                              <div className="text-xs text-muted">
-                                Pay with cash when the card arrives at your doorstep
+                              <div className="text-xs text-muted mt-0.5">
+                                Pay upon doorstep delivery
                               </div>
                             </div>
                           </div>
@@ -840,7 +925,7 @@ export default function OrderPage() {
                           onClick={handleFinalSubmit}
                           disabled={isSubmitting}
                           size="lg"
-                          className="flex-1 h-12 text-base font-bold bg-accent hover:bg-accent-hover text-white shadow-lg flex items-center justify-center gap-2"
+                          className="flex-1 h-12 text-base font-bold bg-accent hover:bg-accent-hover text-white shadow-lg flex items-center justify-center gap-2 transition-all duration-200"
                         >
                           {isSubmitting ? (
                             <>
@@ -853,7 +938,7 @@ export default function OrderPage() {
                             </>
                           ) : (
                             <>
-                              Pay ₹{finalAmount} with Razorpay <CheckCircle2 className="h-5 w-5" />
+                              Pay ₹{finalAmount} Online <CheckCircle2 className="h-5 w-5" />
                             </>
                           )}
                         </Button>

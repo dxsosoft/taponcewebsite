@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     } = body
 
     // 1. Basic validation
-    if (!cardModel || !CARD_VARIANTS.some((v) => v.id === cardModel)) {
+    const isCorporate = cardModel === "corporate"
+    if (!cardModel || (!CARD_VARIANTS.some((v) => v.id === cardModel) && !isCorporate)) {
       return NextResponse.json(
         { success: false, error: "Invalid or missing card model selected." },
         { status: 400 }
@@ -38,7 +39,25 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Compute canonical price strictly on the server
-    const pricing = calculateOrderPricing(cardModel, couponCode)
+    const pricing = isCorporate
+      ? {
+          card: {
+            id: "corporate",
+            name: "Corporate Custom",
+            price: 0,
+            material: "Enterprise",
+            description: "Corporate inquiry",
+            image: "/Taponce_logo_dark.png",
+            colors: [],
+          },
+          basePrice: 0,
+          discount: 0,
+          finalPrice: 0,
+          amountInPaise: 0,
+          couponApplied: false,
+          couponCode: null,
+        }
+      : calculateOrderPricing(cardModel, couponCode)
 
     // 3. Generate unique public order ID (e.g. TAP-782914)
     const randomSuffix = Math.floor(100000 + Math.random() * 900000)
