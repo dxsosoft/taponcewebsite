@@ -32,20 +32,58 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react"
+import Script from "next/script"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
 
-function loadRazorpayScript(): Promise<boolean> {
+function loadRazorpayScript(timeoutMs = 6000): Promise<boolean> {
   return new Promise((resolve) => {
-    if (typeof window !== "undefined" && window.Razorpay) {
+    if (typeof window === "undefined") {
+      resolve(false)
+      return
+    }
+    if (window.Razorpay) {
       resolve(true)
       return
     }
+
+    let resolved = false
+
+    const done = (success: boolean) => {
+      if (resolved) return
+      resolved = true
+      clearTimeout(timer)
+      resolve(success)
+    }
+
+    const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
+      console.warn("[Razorpay] Script loading timed out after " + timeoutMs + "ms")
+      done(Boolean(window.Razorpay))
+    }, timeoutMs)
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+    )
+
+    if (existingScript) {
+      if (window.Razorpay) {
+        done(true)
+        return
+      }
+      existingScript.addEventListener("load", () => {
+        setTimeout(() => done(Boolean(window.Razorpay)), 50)
+      })
+      existingScript.addEventListener("error", () => done(false))
+      return
+    }
+
     const script = document.createElement("script")
     script.src = "https://checkout.razorpay.com/v1/checkout.js"
     script.async = true
-    script.onload = () => resolve(true)
-    script.onerror = () => resolve(false)
-    document.body.appendChild(script)
+    script.onload = () => {
+      setTimeout(() => done(Boolean(window.Razorpay)), 50)
+    }
+    script.onerror = () => done(false)
+    document.head.appendChild(script)
   })
 }
 
@@ -135,13 +173,24 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
 
   const finalAmount = Math.max(0, product.price - discount)
 
+  // Eagerly preload Razorpay script in background when component mounts
+  React.useEffect(() => {
+    loadRazorpayScript().then((ok) => {
+      if (ok) console.log("[Configure] Razorpay SDK preloaded successfully")
+    })
+  }, [])
+
   const handlePlaceOrder = async () => {
+    if (isSubmitting) return
     setIsSubmitting(true)
     setPaymentError(null)
 
     try {
+      console.log("[handlePlaceOrder] Initiating order for:", product.slug, "Mode:", paymentMode)
+
       // 1. Corporate inquiry handling (custom volume pricing)
       if (product.isCustomPricing || product.slug === "corporate") {
+        console.log("[handlePlaceOrder] Handling corporate inquiry...")
         const res = await fetch("/api/orders/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -180,6 +229,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
       }
 
       // 2. Request order creation from server (POST /api/orders/create)
+      console.log("[handlePlaceOrder] Requesting order creation from /api/orders/create...")
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -201,13 +251,15 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
       })
 
       const data = await res.json().catch(() => ({}))
+      console.log("[handlePlaceOrder] Server order response:", res.status, data)
 
       if (!res.ok || !data || !data.success) {
-        throw new Error(data?.error || "Failed to initialize order. Please try again.")
+        throw new Error(data?.error || "Failed to initialize order on server. Please try again.")
       }
 
       // 3. If Cash on Delivery, complete immediately
       if (paymentMode === "cod" || data.isCod) {
+        console.log("[handlePlaceOrder] COD confirmed with order ID:", data.orderId)
         setOrderConfirmation({
           orderId: data.orderId,
           amount: finalAmount,
@@ -222,11 +274,15 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
       }
 
       // 4. Online Payment: Load Razorpay Checkout and launch payment popup
+      console.log("[handlePlaceOrder] Loading Razorpay Checkout SDK...")
       const isLoaded = await loadRazorpayScript()
       if (!isLoaded || !window.Razorpay) {
-        throw new Error("Could not load Razorpay payment gateway. Please check your internet connection.")
+        throw new Error(
+          "Could not load Razorpay payment gateway. Please check your internet connection or disable any ad-blockers and try again."
+        )
       }
 
+      console.log("[handlePlaceOrder] Configuring Razorpay options for order:", data.razorpayOrderId)
       const options: RazorpayOptions = {
         key: data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         amount: data.amount,
@@ -244,6 +300,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
           color: "#00695C",
         },
         handler: async (paymentResponse: RazorpaySuccessResponse) => {
+          console.log("[Razorpay] Payment successful response received:", paymentResponse.razorpay_payment_id)
           try {
             // Verify cryptographic signature with the backend
             const verifyRes = await fetch("/api/payments/verify", {
@@ -258,6 +315,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
             })
 
             const verifyData = await verifyRes.json().catch(() => ({}))
+            console.log("[Razorpay] Verification response:", verifyRes.status, verifyData)
 
             if (!verifyRes.ok || !verifyData.success) {
               throw new Error(verifyData.error || "Payment signature verification failed.")
@@ -273,6 +331,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
               window.scrollTo({ top: 0, behavior: "smooth" })
             }
           } catch (verifyErr: any) {
+            console.error("[Razorpay] Signature verification error:", verifyErr)
             setPaymentError(verifyErr.message || "Payment verification failed. Please contact support.")
           } finally {
             setIsSubmitting(false)
@@ -280,30 +339,54 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
         },
         modal: {
           ondismiss: () => {
+            console.log("[Razorpay] Checkout modal dismissed by user")
             setIsSubmitting(false)
             setPaymentError("Payment checkout was cancelled. You can retry whenever you're ready.")
           },
         },
       }
 
-      const razorpayInstance = new window.Razorpay(options)
-      razorpayInstance.on("payment.failed", (failure: any) => {
-        setIsSubmitting(false)
-        setPaymentError(
-          failure.error?.description || "Payment failed or was declined by your bank. Please retry."
+      console.log("[handlePlaceOrder] Opening Razorpay popup...")
+      try {
+        const razorpayInstance = new window.Razorpay(options)
+        razorpayInstance.on("payment.failed", (failure: any) => {
+          console.error("[Razorpay] Payment failed event:", failure)
+          setIsSubmitting(false)
+          setPaymentError(
+            failure.error?.description || "Payment failed or was declined by your bank. Please retry."
+          )
+        })
+        razorpayInstance.open()
+        console.log("[handlePlaceOrder] Razorpay open() invoked successfully")
+      } catch (openErr: any) {
+        console.error("[handlePlaceOrder] Failed to invoke razorpay.open():", openErr)
+        throw new Error(
+          openErr?.message || "Could not launch Razorpay checkout modal. Please retry."
         )
-      })
-
-      razorpayInstance.open()
+      }
     } catch (err: any) {
       console.error("[handlePlaceOrder] Error:", err)
-      setPaymentError(err.message || "Something went wrong while placing your order.")
+      const errorMsg = err.message || "Payment could not be started. Please try again."
+      setPaymentError(errorMsg)
       setIsSubmitting(false)
+      if (typeof window !== "undefined") {
+        setTimeout(() => {
+          const banner = document.getElementById("payment-error-banner")
+          if (banner) {
+            banner.scrollIntoView({ behavior: "smooth", block: "center" })
+          }
+        }, 100)
+      }
     }
   }
 
   return (
     <>
+      <Script
+        id="razorpay-checkout-sdk"
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="lazyOnload"
+      />
       <Navbar />
       <main className="flex-1 min-h-screen bg-background">
         {/* Breadcrumb Header */}
@@ -1142,9 +1225,17 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                         )}
 
                         {paymentError && (
-                          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
-                            <AlertCircle className="h-4 w-4 shrink-0" />
-                            <span>{paymentError}</span>
+                          <div
+                            id="payment-error-banner"
+                            className="p-4 rounded-2xl bg-red-500/10 border-2 border-red-500/40 text-red-600 dark:text-red-400 text-xs flex items-start gap-3 shadow-xs animate-in fade-in duration-200"
+                          >
+                            <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
+                            <div className="space-y-1 flex-1">
+                              <div className="font-bold text-sm text-red-700 dark:text-red-300">
+                                Payment Notice
+                              </div>
+                              <p className="leading-relaxed font-medium">{paymentError}</p>
+                            </div>
                           </div>
                         )}
 

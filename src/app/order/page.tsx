@@ -24,22 +24,60 @@ import {
   CreditCard,
 } from "lucide-react"
 import Link from "next/link"
+import Script from "next/script"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
 import { CARD_VARIANTS } from "@/lib/pricing"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
 
-function loadRazorpayScript(): Promise<boolean> {
+function loadRazorpayScript(timeoutMs = 6000): Promise<boolean> {
   return new Promise((resolve) => {
-    if (typeof window !== "undefined" && window.Razorpay) {
+    if (typeof window === "undefined") {
+      resolve(false)
+      return
+    }
+    if (window.Razorpay) {
       resolve(true)
       return
     }
+
+    let resolved = false
+
+    const done = (success: boolean) => {
+      if (resolved) return
+      resolved = true
+      clearTimeout(timer)
+      resolve(success)
+    }
+
+    const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
+      console.warn("[Razorpay] Script loading timed out after " + timeoutMs + "ms")
+      done(Boolean(window.Razorpay))
+    }, timeoutMs)
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+    )
+
+    if (existingScript) {
+      if (window.Razorpay) {
+        done(true)
+        return
+      }
+      existingScript.addEventListener("load", () => {
+        setTimeout(() => done(Boolean(window.Razorpay)), 50)
+      })
+      existingScript.addEventListener("error", () => done(false))
+      return
+    }
+
     const script = document.createElement("script")
     script.src = "https://checkout.razorpay.com/v1/checkout.js"
     script.async = true
-    script.onload = () => resolve(true)
-    script.onerror = () => resolve(false)
-    document.body.appendChild(script)
+    script.onload = () => {
+      setTimeout(() => done(Boolean(window.Razorpay)), 50)
+    }
+    script.onerror = () => done(false)
+    document.head.appendChild(script)
   })
 }
 
@@ -107,6 +145,13 @@ export default function OrderPage() {
   }
 
   const finalAmount = Math.max(0, selectedCard.price - discount)
+
+  // Eagerly preload Razorpay script in background when component mounts
+  React.useEffect(() => {
+    loadRazorpayScript().then((ok) => {
+      if (ok) console.log("[OrderPage] Razorpay SDK preloaded successfully")
+    })
+  }, [])
 
   const handleFinalSubmit = async () => {
     try {
@@ -217,15 +262,19 @@ export default function OrderPage() {
         },
       }
 
-      const razorpayInstance = new window.Razorpay(options)
-      razorpayInstance.on("payment.failed", (failure: any) => {
-        setIsSubmitting(false)
-        setErrorMessage(
-          failure.error?.description || "Payment failed or was declined by your bank. Please retry."
-        )
-      })
-
-      razorpayInstance.open()
+      try {
+        const razorpayInstance = new window.Razorpay(options)
+        razorpayInstance.on("payment.failed", (failure: any) => {
+          setIsSubmitting(false)
+          setErrorMessage(
+            failure.error?.description || "Payment failed or was declined by your bank. Please retry."
+          )
+        })
+        razorpayInstance.open()
+      } catch (openErr: any) {
+        console.error("[OrderPage] Failed to invoke razorpay.open():", openErr)
+        throw new Error(openErr?.message || "Could not launch Razorpay checkout modal. Please retry.")
+      }
     } catch (err: any) {
       console.error("[OrderPage] Checkout error:", err)
       setErrorMessage(err.message || "Something went wrong while processing your order.")
@@ -235,6 +284,11 @@ export default function OrderPage() {
 
   return (
     <>
+      <Script
+        id="razorpay-checkout-sdk"
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="lazyOnload"
+      />
       <Navbar />
       <main className="flex-1 bg-surface-hover py-12 md:py-20 min-h-screen">
         <div className="container mx-auto px-4 max-w-6xl">
