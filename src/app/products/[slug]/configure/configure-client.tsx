@@ -36,62 +36,6 @@ import {
 import Script from "next/script"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
 
-function GooglePayBadgeIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M43.6 20.5H42V20H24V28H35.3C33.7 32.7 29.2 36 24 36C17.4 36 12 30.6 12 24C12 17.4 17.4 12 24 12C27 12 29.7 13.1 31.8 15L37.5 9.3C33.9 6 29.2 4 24 4C13 4 4 13 4 24C4 35 13 44 24 44C35 44 44 35 44 24C44 22.8 43.9 21.6 43.6 20.5Z"
-        fill="#FFC107"
-      />
-      <path
-        d="M6.3 14.7L12.9 19.5C14.7 15.1 18.9 12 24 12C27 12 29.7 13.1 31.8 15L37.5 9.3C33.9 6 29.2 4 24 4C16.3 4 9.7 8.4 6.3 14.7Z"
-        fill="#FF3D00"
-      />
-      <path
-        d="M24 44C29.1 44 33.7 42.1 37.3 38.9L31.1 33.8C29.1 35.2 26.7 36 24 36C18.9 36 14.5 32.8 12.8 28.3L6.2 33.4C9.6 39.7 16.3 44 24 44Z"
-        fill="#4CAF50"
-      />
-      <path
-        d="M43.6 20.5H42V20H24V28H35.3C34.6 30.1 33.1 32.2 31.1 33.8L37.3 38.9C36.9 39.3 44 34 44 24C44 22.8 43.9 21.6 43.6 20.5Z"
-        fill="#1976D2"
-      />
-    </svg>
-  )
-}
-
-function PhonePeBadgeIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <div
-      className={`rounded-lg bg-[#5f259f] flex items-center justify-center font-bold text-white text-xs shadow-xs ${className}`}
-    >
-      पे
-    </div>
-  )
-}
-
-function PaytmBadgeIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <div
-      className={`rounded-md bg-[#002e6e] px-1.5 py-0.5 flex items-center justify-center font-black text-[9px] tracking-tight shadow-xs ${className}`}
-    >
-      <span className="text-white">Pay</span>
-      <span className="text-[#00b9f5]">tm</span>
-    </div>
-  )
-}
-
-function GenericUpiBadgeIcon({ className = "h-5 w-auto" }: { className?: string }) {
-  return (
-    <div className={`flex items-center justify-center gap-0.5 ${className}`}>
-      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 18L13 6H8L3 18H4Z" fill="#097939" />
-        <path d="M10 18L19 6H14L9 18H10Z" fill="#ED752E" />
-      </svg>
-      <span className="font-extrabold text-[10px] tracking-tight text-foreground">UPI</span>
-    </div>
-  )
-}
-
 function loadRazorpayScript(timeoutMs = 6000): Promise<boolean> {
   return new Promise((resolve) => {
     if (typeof window === "undefined") {
@@ -237,18 +181,13 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
     })
   }, [])
 
-  const handlePlaceOrder = async (
-    preferredMode?: "online" | "upi",
-    preferredApp?: string
-  ) => {
+  const handlePlaceOrder = async () => {
     if (isSubmitting) return
     setIsSubmitting(true)
     setPaymentError(null)
 
-    const activeMode = preferredMode || (paymentMode === "cod" ? "cod" : paymentMode)
-
     try {
-      console.log("[handlePlaceOrder] Initiating order for:", product.slug, "Mode:", activeMode, "PreferredApp:", preferredApp)
+      console.log("[handlePlaceOrder] Initiating order for:", product.slug, "Mode:", paymentMode)
 
       // 1. Corporate inquiry handling (custom volume pricing)
       if (product.isCustomPricing || product.slug === "corporate") {
@@ -307,7 +246,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
             state: address.state,
             pincode: address.pincode,
           },
-          paymentMethod: activeMode === "cod" ? "cod" : "online",
+          paymentMethod: paymentMode === "cod" ? "cod" : "online",
           couponCode: couponApplied ? coupon : null,
         }),
       })
@@ -320,7 +259,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
       }
 
       // 3. If Cash on Delivery, complete immediately
-      if (activeMode === "cod" || data.isCod) {
+      if (paymentMode === "cod" || data.isCod) {
         console.log("[handlePlaceOrder] COD confirmed with order ID:", data.orderId)
         setOrderConfirmation({
           orderId: data.orderId,
@@ -344,15 +283,13 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
         )
       }
 
-      const isUpiPreferred = activeMode === "upi"
+      const isUpiMode = paymentMode === "upi"
 
       console.log(
         "[handlePlaceOrder] Configuring Razorpay options for order:",
         data.razorpayOrderId,
-        "isUpiPreferred:",
-        isUpiPreferred,
-        "preferredApp:",
-        preferredApp
+        "isUpiMode:",
+        isUpiMode
       )
       const options: RazorpayOptions = {
         key: data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
@@ -366,30 +303,32 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
           name: address.recipientName || cardDetails.fullName,
           email: cardDetails.email,
           contact: address.phone,
-          ...(isUpiPreferred ? { method: "upi" } : {}),
+          ...(isUpiMode ? { method: "upi" } : {}),
         },
         theme: {
           color: "#00695C",
         },
-        ...(isUpiPreferred
+        ...(isUpiMode
           ? {
+              method: {
+                upi: true,
+                card: false,
+                netbanking: false,
+                wallet: false,
+                emi: false,
+                paylater: false,
+              },
               config: {
                 display: {
                   blocks: {
                     upi: {
-                      name: "Pay using UPI",
-                      instruments: [
-                        {
-                          method: "upi",
-                          flows: ["intent", "qr", "collect"],
-                          ...(preferredApp ? { apps: [preferredApp] } : {}),
-                        },
-                      ],
+                      name: "Pay via UPI",
+                      instruments: [{ method: "upi" }],
                     },
                   },
                   sequence: ["block.upi"],
                   preferences: {
-                    show_default_blocks: true,
+                    show_default_blocks: false,
                   },
                 },
               },
@@ -1241,106 +1180,44 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                               role="radio"
                               aria-checked={paymentMode === "upi"}
                               tabIndex={0}
-                              onClick={() => {
-                                setPaymentMode("upi")
-                                handlePlaceOrder("upi")
-                              }}
+                              onClick={() => setPaymentMode("upi")}
                               onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") {
                                   e.preventDefault()
                                   setPaymentMode("upi")
-                                  handlePlaceOrder("upi")
                                 }
                               }}
-                              className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 ${
+                              className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${
                                 paymentMode === "upi"
                                   ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
                                   : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
                               }`}
                             >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3.5">
-                                  <div
-                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                                      paymentMode === "upi"
-                                        ? "border-accent bg-accent"
-                                        : "border-muted/50 bg-transparent"
-                                    }`}
-                                  >
-                                    {paymentMode === "upi" && (
-                                      <div className="w-2 h-2 rounded-full bg-white" />
-                                    )}
+                              <div className="flex items-center gap-3.5">
+                                <div
+                                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                                    paymentMode === "upi"
+                                      ? "border-accent bg-accent"
+                                      : "border-muted/50 bg-transparent"
+                                  }`}
+                                >
+                                  {paymentMode === "upi" && (
+                                    <div className="w-2 h-2 rounded-full bg-white" />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                                    <Smartphone className="h-4 w-4 text-accent" />
+                                    UPI Payment
                                   </div>
-                                  <div>
-                                    <div className="text-sm font-bold text-foreground flex items-center gap-2">
-                                      <Smartphone className="h-4 w-4 text-accent" />
-                                      UPI Payment
-                                    </div>
-                                    <div className="text-xs text-muted mt-0.5">
-                                      Pay using Google Pay, PhonePe, Paytm, or any UPI app
-                                    </div>
+                                  <div className="text-xs text-muted mt-0.5">
+                                    UPI QR code, Google Pay, PhonePe, Paytm, or UPI ID
                                   </div>
                                 </div>
-                                <span className="text-[10px] font-bold bg-accent/10 text-accent px-2.5 py-1 rounded-full uppercase tracking-wider">
-                                  Instant
-                                </span>
                               </div>
-
-                              {/* 4 App Icon Badges in a Row */}
-                              <div className="grid grid-cols-4 gap-2.5 mt-3.5 pt-3.5 border-t border-border/60">
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setPaymentMode("upi")
-                                    handlePlaceOrder("upi", "google_pay")
-                                  }}
-                                  className="p-2.5 rounded-xl bg-surface border border-border hover:border-accent hover:bg-accent/5 active:scale-95 transition-all duration-150 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs"
-                                >
-                                  <GooglePayBadgeIcon className="h-5 w-5 mb-1" />
-                                  <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
-                                    Google Pay
-                                  </span>
-                                </div>
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setPaymentMode("upi")
-                                    handlePlaceOrder("upi", "phonepe")
-                                  }}
-                                  className="p-2.5 rounded-xl bg-surface border border-border hover:border-accent hover:bg-accent/5 active:scale-95 transition-all duration-150 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs"
-                                >
-                                  <PhonePeBadgeIcon className="h-5 w-5 mb-1" />
-                                  <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
-                                    PhonePe
-                                  </span>
-                                </div>
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setPaymentMode("upi")
-                                    handlePlaceOrder("upi", "paytm")
-                                  }}
-                                  className="p-2.5 rounded-xl bg-surface border border-border hover:border-accent hover:bg-accent/5 active:scale-95 transition-all duration-150 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs"
-                                >
-                                  <PaytmBadgeIcon className="h-5 w-5 mb-1" />
-                                  <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
-                                    Paytm
-                                  </span>
-                                </div>
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setPaymentMode("upi")
-                                    handlePlaceOrder("upi")
-                                  }}
-                                  className="p-2.5 rounded-xl bg-surface border border-border hover:border-accent hover:bg-accent/5 active:scale-95 transition-all duration-150 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs"
-                                >
-                                  <GenericUpiBadgeIcon className="h-5 w-auto mb-1" />
-                                  <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
-                                    UPI
-                                  </span>
-                                </div>
-                              </div>
+                              <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                Instant QR
+                              </span>
                             </div>
 
                             {/* Option 3: Cash on Delivery (COD) */}

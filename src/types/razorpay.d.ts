@@ -26,6 +26,15 @@ export interface RazorpayOptions {
   description?: string
   image?: string
   order_id: string
+  method?: {
+    upi?: boolean
+    card?: boolean
+    netbanking?: boolean
+    wallet?: boolean
+    emi?: boolean
+    paylater?: boolean
+    [key: string]: any
+  }
   handler?: (response: RazorpaySuccessResponse) => void | Promise<void>
   prefill?: {
     name?: string
