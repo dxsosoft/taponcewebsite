@@ -27,6 +27,7 @@ import {
   Check,
   CreditCard,
   Banknote,
+  Smartphone,
   Users,
   Upload,
   AlertCircle,
@@ -34,6 +35,62 @@ import {
 } from "lucide-react"
 import Script from "next/script"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
+
+function GooglePayBadgeIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M43.6 20.5H42V20H24V28H35.3C33.7 32.7 29.2 36 24 36C17.4 36 12 30.6 12 24C12 17.4 17.4 12 24 12C27 12 29.7 13.1 31.8 15L37.5 9.3C33.9 6 29.2 4 24 4C13 4 4 13 4 24C4 35 13 44 24 44C35 44 44 35 44 24C44 22.8 43.9 21.6 43.6 20.5Z"
+        fill="#FFC107"
+      />
+      <path
+        d="M6.3 14.7L12.9 19.5C14.7 15.1 18.9 12 24 12C27 12 29.7 13.1 31.8 15L37.5 9.3C33.9 6 29.2 4 24 4C16.3 4 9.7 8.4 6.3 14.7Z"
+        fill="#FF3D00"
+      />
+      <path
+        d="M24 44C29.1 44 33.7 42.1 37.3 38.9L31.1 33.8C29.1 35.2 26.7 36 24 36C18.9 36 14.5 32.8 12.8 28.3L6.2 33.4C9.6 39.7 16.3 44 24 44Z"
+        fill="#4CAF50"
+      />
+      <path
+        d="M43.6 20.5H42V20H24V28H35.3C34.6 30.1 33.1 32.2 31.1 33.8L37.3 38.9C36.9 39.3 44 34 44 24C44 22.8 43.9 21.6 43.6 20.5Z"
+        fill="#1976D2"
+      />
+    </svg>
+  )
+}
+
+function PhonePeBadgeIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <div
+      className={`rounded-lg bg-[#5f259f] flex items-center justify-center font-bold text-white text-xs shadow-xs ${className}`}
+    >
+      पे
+    </div>
+  )
+}
+
+function PaytmBadgeIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <div
+      className={`rounded-md bg-[#002e6e] px-1.5 py-0.5 flex items-center justify-center font-black text-[9px] tracking-tight shadow-xs ${className}`}
+    >
+      <span className="text-white">Pay</span>
+      <span className="text-[#00b9f5]">tm</span>
+    </div>
+  )
+}
+
+function GenericUpiBadgeIcon({ className = "h-5 w-auto" }: { className?: string }) {
+  return (
+    <div className={`flex items-center justify-center gap-0.5 ${className}`}>
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 18L13 6H8L3 18H4Z" fill="#097939" />
+        <path d="M10 18L19 6H14L9 18H10Z" fill="#ED752E" />
+      </svg>
+      <span className="font-extrabold text-[10px] tracking-tight text-foreground">UPI</span>
+    </div>
+  )
+}
 
 function loadRazorpayScript(timeoutMs = 6000): Promise<boolean> {
   return new Promise((resolve) => {
@@ -1140,7 +1197,56 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                               </span>
                             </div>
 
-                            {/* Option 2: Cash on Delivery (COD) */}
+                            {/* Option 2 (Visual): UPI Payment */}
+                            <div className="card-selectable select-none p-4 sm:p-5 rounded-2xl border-2 border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface transition-all duration-200">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3.5">
+                                  <div className="w-5 h-5 rounded-full border-2 border-muted/50 bg-transparent flex items-center justify-center transition-all duration-200" />
+                                  <div>
+                                    <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                                      <Smartphone className="h-4 w-4 text-accent" />
+                                      UPI Payment
+                                    </div>
+                                    <div className="text-xs text-muted mt-0.5">
+                                      Pay using Google Pay, PhonePe, Paytm, or any UPI app
+                                    </div>
+                                  </div>
+                                </div>
+                                <span className="text-[10px] font-bold bg-accent/10 text-accent px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                  Instant
+                                </span>
+                              </div>
+
+                              {/* 4 App Icon Badges in a Row */}
+                              <div className="grid grid-cols-4 gap-2.5 mt-3.5 pt-3.5 border-t border-border/60">
+                                <div className="p-2.5 rounded-xl bg-surface-hover/80 border border-border flex flex-col items-center justify-center text-center">
+                                  <GooglePayBadgeIcon className="h-5 w-5 mb-1" />
+                                  <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
+                                    Google Pay
+                                  </span>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-surface-hover/80 border border-border flex flex-col items-center justify-center text-center">
+                                  <PhonePeBadgeIcon className="h-5 w-5 mb-1" />
+                                  <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
+                                    PhonePe
+                                  </span>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-surface-hover/80 border border-border flex flex-col items-center justify-center text-center">
+                                  <PaytmBadgeIcon className="h-5 w-5 mb-1" />
+                                  <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
+                                    Paytm
+                                  </span>
+                                </div>
+                                <div className="p-2.5 rounded-xl bg-surface-hover/80 border border-border flex flex-col items-center justify-center text-center">
+                                  <GenericUpiBadgeIcon className="h-5 w-auto mb-1" />
+                                  <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
+                                    UPI
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Option 3: Cash on Delivery (COD) */}
                             <div
                               role="radio"
                               aria-checked={paymentMode === "cod"}
