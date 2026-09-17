@@ -106,8 +106,10 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                         <button
                           key={c.id}
                           type="button"
+                          role="radio"
+                          aria-checked={isSelected}
                           onClick={() => setSelectedColor(c.id)}
-                          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 text-xs font-semibold transition-all cursor-pointer ${
+                          className={`card-selectable select-none cursor-pointer flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 text-xs font-semibold transition-all ${
                             isSelected
                               ? "border-accent bg-accent/10 text-foreground ring-2 ring-accent/20 shadow-xs"
                               : "border-border hover:border-accent/40 bg-surface-hover/50 text-muted hover:text-foreground"

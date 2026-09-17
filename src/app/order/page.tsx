@@ -381,11 +381,21 @@ export default function OrderPage() {
                         {CARD_VARIANTS.map((card) => (
                           <div
                             key={card.id}
+                            role="radio"
+                            aria-checked={selectedCardId === card.id}
+                            tabIndex={0}
                             onClick={() => {
                               setSelectedCardId(card.id)
                               setSelectedColor(card.colors[0].id)
                             }}
-                            className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex justify-between items-center ${
+                            onKeyDown={(e) => {
+                              if (e.key === " " || e.key === "Enter") {
+                                e.preventDefault()
+                                setSelectedCardId(card.id)
+                                setSelectedColor(card.colors[0].id)
+                              }
+                            }}
+                            className={`card-selectable select-none cursor-pointer p-5 rounded-2xl border-2 transition-all flex justify-between items-center ${
                               selectedCardId === card.id
                                 ? "border-accent bg-accent/5 shadow-md"
                                 : "border-border hover:border-accent/40 bg-surface"
@@ -428,8 +438,11 @@ export default function OrderPage() {
                           {selectedCard.colors.map((c) => (
                             <button
                               key={c.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={selectedColor === c.id}
                               onClick={() => setSelectedColor(c.id)}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
+                              className={`card-selectable select-none cursor-pointer flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
                                 selectedColor === c.id
                                   ? "border-accent bg-accent/10 text-foreground font-bold"
                                   : "border-border hover:border-muted"
@@ -739,8 +752,17 @@ export default function OrderPage() {
                       <div className="space-y-3">
                         {/* Option 1: Pay Online */}
                         <div
+                          role="radio"
+                          aria-checked={paymentMode === "online"}
+                          tabIndex={0}
                           onClick={() => setPaymentMode("online")}
-                          className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                          onKeyDown={(e) => {
+                            if (e.key === " " || e.key === "Enter") {
+                              e.preventDefault()
+                              setPaymentMode("online")
+                            }
+                          }}
+                          className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${
                             paymentMode === "online"
                               ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
                               : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
@@ -775,8 +797,17 @@ export default function OrderPage() {
 
                         {/* Option 2: Cash on Delivery */}
                         <div
+                          role="radio"
+                          aria-checked={paymentMode === "cod"}
+                          tabIndex={0}
                           onClick={() => setPaymentMode("cod")}
-                          className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                          onKeyDown={(e) => {
+                            if (e.key === " " || e.key === "Enter") {
+                              e.preventDefault()
+                              setPaymentMode("cod")
+                            }
+                          }}
+                          className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${
                             paymentMode === "cod"
                               ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
                               : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"

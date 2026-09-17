@@ -47,7 +47,7 @@ export default function Page() {
                 return (
                   <div
                     key={product.slug}
-                    className={`rounded-2xl p-5 flex flex-col justify-between shadow-xs transition-all duration-300 hover:-translate-y-1 ${cardBg}`}
+                    className={`rounded-2xl p-5 flex flex-col justify-between shadow-xs transition-all duration-300 hover:-translate-y-1 select-none ${cardBg}`}
                   >
                     <div>
                       <div className="mb-4 flex justify-center items-center">

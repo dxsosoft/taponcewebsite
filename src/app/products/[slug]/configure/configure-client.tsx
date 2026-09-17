@@ -463,7 +463,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                           type="button"
                           onClick={() => s.num < step && setStep(s.num)}
                           disabled={s.num > step}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all select-none cursor-pointer ${
                             step === s.num
                               ? "bg-accent text-white shadow-lg ring-4 ring-accent/20"
                               : step > s.num
@@ -507,8 +507,17 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                             return (
                               <div
                                 key={c.id}
+                                role="radio"
+                                aria-checked={isSelected}
+                                tabIndex={0}
                                 onClick={() => setSelectedColor(c.id)}
-                                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                                onKeyDown={(e) => {
+                                  if (e.key === " " || e.key === "Enter") {
+                                    e.preventDefault()
+                                    setSelectedColor(c.id)
+                                  }
+                                }}
+                                className={`card-selectable select-none cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${
                                   isSelected
                                     ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/30"
                                     : "border-border hover:border-accent/40 bg-surface"
@@ -601,11 +610,13 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                                     <button
                                       key={range}
                                       type="button"
+                                      role="radio"
+                                      aria-checked={isSelected}
                                       onClick={() => {
                                         setCorporateDetails((prev) => ({ ...prev, quantity: range }))
                                         setTeamSize(range)
                                       }}
-                                      className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                                      className={`select-none cursor-pointer py-2.5 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
                                         isSelected
                                           ? "bg-accent text-white border-accent shadow-xs ring-2 ring-accent/20"
                                           : "bg-surface-hover/50 border-border text-muted hover:border-accent/40 hover:text-foreground"
@@ -630,7 +641,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                               <span className="text-[11px] text-muted mb-2 block">
                                 For custom front &amp; back branding
                               </span>
-                              <div className="relative border-2 border-dashed border-border hover:border-accent/50 rounded-xl p-4 bg-surface-hover/40 transition-all text-center group cursor-pointer">
+                              <div className="relative border-2 border-dashed border-border hover:border-accent/50 rounded-xl p-4 bg-surface-hover/40 transition-all text-center group cursor-pointer select-none">
                                 <input
                                   type="file"
                                   accept=".png,.jpg,.jpeg,.svg"
@@ -1005,8 +1016,17 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                           <div className="space-y-3">
                             {/* Option 1: Pay Online */}
                             <div
+                              role="radio"
+                              aria-checked={paymentMode === "online"}
+                              tabIndex={0}
                               onClick={() => setPaymentMode("online")}
-                              className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                              onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") {
+                                  e.preventDefault()
+                                  setPaymentMode("online")
+                                }
+                              }}
+                              className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${
                                 paymentMode === "online"
                                   ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
                                   : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
@@ -1039,8 +1059,17 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
 
                             {/* Option 2: Cash on Delivery (COD) */}
                             <div
+                              role="radio"
+                              aria-checked={paymentMode === "cod"}
+                              tabIndex={0}
                               onClick={() => setPaymentMode("cod")}
-                              className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                              onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") {
+                                  e.preventDefault()
+                                  setPaymentMode("cod")
+                                }
+                              }}
+                              className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${
                                 paymentMode === "cod"
                                   ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
                                   : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
