@@ -27,7 +27,6 @@ import Link from "next/link"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
 import { CARD_VARIANTS } from "@/lib/pricing"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
-import { UpiPaymentSelector, type UpiSelection } from "@/components/ui/upi-payment-selector"
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -74,10 +73,6 @@ export default function OrderPage() {
   // Step 4: Payment
   // paymentMode: "online" | "cod"
   const [paymentMode, setPaymentMode] = React.useState<"online" | "cod">("online")
-  const [upiSelection, setUpiSelection] = React.useState<UpiSelection>({
-    method: "apps",
-    appId: "gpay",
-  })
   const [coupon, setCoupon] = React.useState("")
   const [discount, setDiscount] = React.useState(0)
   const [couponApplied, setCouponApplied] = React.useState(false)
@@ -176,33 +171,9 @@ export default function OrderPage() {
           name: address.recipientName,
           email: cardDetails.email,
           contact: address.phone,
-          method: upiSelection.method === "cards" ? "card" : "upi",
-          ...(upiSelection.method === "vpa" && upiSelection.vpa
-            ? { vpa: upiSelection.vpa }
-            : {}),
         },
         theme: {
           color: "#00695C",
-        },
-        config: {
-          display: {
-            blocks: {
-              upi: {
-                name: "Pay using UPI",
-                instruments: [
-                  {
-                    method: "upi",
-                    flows: upiSelection.method === "qr" ? ["qr"] : ["intent", "qr", "collect"],
-                    apps:
-                      upiSelection.method === "apps" && upiSelection.appId
-                        ? [upiSelection.appId]
-                        : ["google_pay", "phonepe", "paytm", "bhim"],
-                  },
-                ],
-              },
-            },
-            sequence: upiSelection.method === "cards" ? [] : ["block.upi"],
-          },
         },
         handler: async (paymentResponse: RazorpaySuccessResponse) => {
           try {
@@ -766,82 +737,70 @@ export default function OrderPage() {
                       <h2 className="text-2xl font-bold">4. Select Payment Method</h2>
 
                       <div className="space-y-3">
-                        {/* Option 1: Razorpay Online (UPI, Cards, NetBanking, Wallets) */}
+                        {/* Option 1: Pay Online */}
                         <div
                           onClick={() => setPaymentMode("online")}
-                          className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                          className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between ${
                             paymentMode === "online"
-                              ? "border-accent bg-accent/5 shadow-sm"
-                              : "border-border hover:border-accent/40 bg-surface"
+                              ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
+                              : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
                           }`}
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3.5">
                             <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                                 paymentMode === "online"
                                   ? "border-accent bg-accent"
-                                  : "border-muted"
+                                  : "border-muted/50 bg-transparent"
                               }`}
                             >
                               {paymentMode === "online" && (
                                 <div className="w-2 h-2 rounded-full bg-white"></div>
                               )}
                             </div>
-                            <div className="space-y-0.5">
-                              <div className="text-sm font-bold flex items-center gap-2">
+                            <div>
+                              <div className="text-sm font-bold text-foreground flex items-center gap-2">
                                 <CreditCard className="h-4 w-4 text-accent" />
-                                Instant Online Payment (Razorpay)
+                                Pay Online
                               </div>
-                              <div className="text-xs text-muted">
-                                UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards & Net Banking
+                              <div className="text-xs text-muted mt-0.5">
+                                UPI, Cards, NetBanking, Wallets — secure checkout
                               </div>
                             </div>
                           </div>
-                          <span className="text-[11px] font-bold bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded">
-                            FASTEST
+                          <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                            Instant
                           </span>
                         </div>
-
-                        {/* Interactive UPI Apps, Dynamic QR Code & NetBanking Selector */}
-                        {paymentMode === "online" && (
-                          <div className="pt-1">
-                            <UpiPaymentSelector
-                              amount={finalAmount}
-                              productName={selectedCard.name}
-                              onSelectionChange={setUpiSelection}
-                              disabled={isSubmitting}
-                            />
-                          </div>
-                        )}
 
                         {/* Option 2: Cash on Delivery */}
                         <div
                           onClick={() => setPaymentMode("cod")}
-                          className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                          className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between ${
                             paymentMode === "cod"
-                              ? "border-accent bg-accent/5 shadow-sm"
-                              : "border-border hover:border-accent/40 bg-surface"
+                              ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
+                              : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
                           }`}
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3.5">
                             <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                                 paymentMode === "cod"
                                   ? "border-accent bg-accent"
-                                  : "border-muted"
+                                  : "border-muted/50 bg-transparent"
                               }`}
                             >
                               {paymentMode === "cod" && (
                                 <div className="w-2 h-2 rounded-full bg-white"></div>
                               )}
                             </div>
-                            <div className="space-y-0.5">
-                              <div className="text-sm font-bold flex items-center gap-2">
+                            <div>
+                              <div className="text-sm font-bold text-foreground flex items-center gap-2">
                                 <Banknote className="h-4 w-4 text-accent" />
                                 Cash on Delivery (COD)
                               </div>
-                              <div className="text-xs text-muted">
-                                Pay with cash when the card arrives at your doorstep
+                              <div className="text-xs text-muted mt-0.5">
+                                Pay upon doorstep delivery
                               </div>
                             </div>
                           </div>
@@ -881,7 +840,7 @@ export default function OrderPage() {
                           onClick={handleFinalSubmit}
                           disabled={isSubmitting}
                           size="lg"
-                          className="flex-1 h-12 text-base font-bold bg-accent hover:bg-accent-hover text-white shadow-lg flex items-center justify-center gap-2"
+                          className="flex-1 h-12 text-base font-bold bg-accent hover:bg-accent-hover text-white shadow-lg flex items-center justify-center gap-2 transition-all duration-200"
                         >
                           {isSubmitting ? (
                             <>
@@ -892,31 +851,9 @@ export default function OrderPage() {
                             <>
                               Place COD Order (₹{finalAmount}) <CheckCircle2 className="h-5 w-5" />
                             </>
-                          ) : upiSelection.method === "apps" ? (
-                            <>
-                              Pay ₹{finalAmount} via{" "}
-                              {upiSelection.appId === "gpay"
-                                ? "Google Pay"
-                                : upiSelection.appId === "phonepe"
-                                ? "PhonePe"
-                                : upiSelection.appId === "paytm"
-                                ? "Paytm"
-                                : upiSelection.appId === "slice"
-                                ? "Slice UPI"
-                                : "CRED Pay"}{" "}
-                              <CheckCircle2 className="h-5 w-5" />
-                            </>
-                          ) : upiSelection.method === "qr" ? (
-                            <>
-                              Scan & Pay ₹{finalAmount} via UPI QR <CheckCircle2 className="h-5 w-5" />
-                            </>
-                          ) : upiSelection.method === "vpa" ? (
-                            <>
-                              Pay ₹{finalAmount} with UPI ID <CheckCircle2 className="h-5 w-5" />
-                            </>
                           ) : (
                             <>
-                              Pay ₹{finalAmount} via Card / NetBanking <CheckCircle2 className="h-5 w-5" />
+                              Pay ₹{finalAmount} Online <CheckCircle2 className="h-5 w-5" />
                             </>
                           )}
                         </Button>
