@@ -2,7 +2,7 @@ import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle2, ShieldCheck, Users, BarChart3, Zap, Layers, Globe, ArrowRight, Building2, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { BusinessHeroButtons } from "@/components/business-hero-buttons"
@@ -57,7 +57,7 @@ export default function BusinessPage() {
                   desc: "Track total taps, link clicks, and new contact exchanges to measure ROI on field networking and events."
                 },
                 {
-                  icon: Z
+                  icon: Zap,
                   title: "Instant Employee Onboarding",
                   desc: "Generate digital identity profiles for new hires in seconds before their physical cards even arrive."
                 },
@@ -126,7 +126,7 @@ export default function BusinessPage() {
                 </div>
                 <span className="text-xs font-semibold px-2.5 py-1 rounded bg-accent/10 text-accent">Active Enterprise</span>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="p-4 rounded-xl bg-surface-hover border border-border/50 flex items-center justify-between">
                   <div>

@@ -31,6 +31,8 @@ export interface RazorpayOptions {
     name?: string
     email?: string
     contact?: string
+    method?: string
+    vpa?: string
   }
   notes?: Record<string, string>
   theme?: {
@@ -44,6 +46,15 @@ export interface RazorpayOptions {
     confirm_close?: boolean
     ondismiss?: () => void
     animation?: boolean
+  }
+  config?: {
+    display?: {
+      blocks?: Record<string, any>
+      sequence?: string[]
+      preferences?: {
+        show_default_blocks?: boolean
+      }
+    }
   }
 }
 

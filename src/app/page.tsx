@@ -354,11 +354,47 @@ export default function Home() {
           <div className="text-center mb-10">
             <h3 className="text-xl font-semibold text-muted">Trusted by professionals and businesses</h3>
           </div>
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-50 grayscale">
-            {/* Logo placeholders */}
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-8 w-32 bg-gray-300 rounded animate-pulse"></div>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 md:gap-10 max-w-5xl mx-auto text-center items-center">
+            <div>
+              <div className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-accent tracking-tight">
+                10k+
+              </div>
+              <div className="text-xs md:text-sm font-medium text-muted mt-1.5 uppercase tracking-wider">
+                Active Users
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-accent tracking-tight">
+                500+
+              </div>
+              <div className="text-xs md:text-sm font-medium text-muted mt-1.5 uppercase tracking-wider">
+                Companies
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-accent tracking-tight">
+                1M+
+              </div>
+              <div className="text-xs md:text-sm font-medium text-muted mt-1.5 uppercase tracking-wider">
+                Connections Made
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-accent tracking-tight">
+                4.9/5
+              </div>
+              <div className="text-xs md:text-sm font-medium text-muted mt-1.5 uppercase tracking-wider">
+                Average Rating
+              </div>
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <div className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-accent tracking-tight">
+                Pan-India
+              </div>
+              <div className="text-xs md:text-sm font-medium text-muted mt-1.5 uppercase tracking-wider">
+                Delivery
+              </div>
+            </div>
           </div>
           <div className="text-center mt-12">
              <p className="italic text-xl text-muted font-serif">"Built for modern professionals and businesses."</p>

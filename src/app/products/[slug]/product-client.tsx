@@ -31,7 +31,26 @@ import {
   Star,
   Users,
   Upload,
+  AlertCircle,
+  Loader2,
 } from "lucide-react"
+import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
+import { UpiPaymentSelector, type UpiSelection } from "@/components/ui/upi-payment-selector"
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window !== "undefined" && window.Razorpay) {
+      resolve(true)
+      return
+    }
+    const script = document.createElement("script")
+    script.src = "https://checkout.razorpay.com/v1/checkout.js"
+    script.async = true
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
 
 interface ProductClientProps {
   product: Product
@@ -66,6 +85,10 @@ export function ProductDetailClient({ product }: ProductClientProps) {
 
   // Step 4: Payment & Discounts
   const [paymentMode, setPaymentMode] = React.useState<"online" | "cod">("online")
+  const [upiSelection, setUpiSelection] = React.useState<UpiSelection>({
+    method: "apps",
+    appId: "gpay",
+  })
   const [coupon, setCoupon] = React.useState("")
   const [discount, setDiscount] = React.useState(0)
   const [couponApplied, setCouponApplied] = React.useState(false)
@@ -84,6 +107,7 @@ export function ProductDetailClient({ product }: ProductClientProps) {
   // Submission & Completion
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isCompleted, setIsCompleted] = React.useState(false)
+  const [paymentError, setPaymentError] = React.useState<string | null>(null)
   const [configureHovered, setConfigureHovered] = React.useState(false)
   const [orderConfirmation, setOrderConfirmation] = React.useState<{
     orderId: string
@@ -114,15 +138,21 @@ export function ProductDetailClient({ product }: ProductClientProps) {
 
   const handlePlaceOrder = async () => {
     setIsSubmitting(true)
+    setPaymentError(null)
+
     try {
-      if (product.slug !== "corporate") {
+      // 1. Corporate inquiry handling (custom volume pricing)
+      if (product.isCustomPricing || product.slug === "corporate") {
         const res = await fetch("/api/orders/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             cardModel: product.slug,
             cardColor: selectedColor,
-            cardDetails,
+            cardDetails: {
+              ...cardDetails,
+              corporateDetails,
+            },
             shippingAddress: {
               fullName: address.recipientName || cardDetails.fullName,
               phone: address.phone,
@@ -131,39 +161,169 @@ export function ProductDetailClient({ product }: ProductClientProps) {
               state: address.state,
               pincode: address.pincode,
             },
-            paymentMethod: paymentMode,
-            couponCode: couponApplied ? coupon : null,
+            paymentMethod: "cod",
+            couponCode: null,
           }),
         })
         const data = await res.json().catch(() => ({}))
-        if (data && data.success && data.orderId) {
-          setOrderConfirmation({
-            orderId: data.orderId,
-            amount: finalAmount,
-            isCod: paymentMode === "cod",
-          })
-          setIsCompleted(true)
-          setIsSubmitting(false)
-          if (typeof window !== "undefined") {
-            window.scrollTo({ top: 0, behavior: "smooth" })
-          }
-          return
+        const orderId = (data && data.orderId) || ("TAP-" + Math.floor(100000 + Math.random() * 900000))
+        setOrderConfirmation({
+          orderId,
+          amount: 0,
+          isCod: true,
+        })
+        setIsCompleted(true)
+        setIsSubmitting(false)
+        if (typeof window !== "undefined") {
+          window.scrollTo({ top: 0, behavior: "smooth" })
         }
+        return
       }
-    } catch (err) {
-      console.error("[handlePlaceOrder] Error:", err)
-    }
 
-    const generatedId = "TAP-" + Math.floor(100000 + Math.random() * 900000)
-    setOrderConfirmation({
-      orderId: generatedId,
-      amount: finalAmount,
-      isCod: paymentMode === "cod",
-    })
-    setIsCompleted(true)
-    setIsSubmitting(false)
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" })
+      // 2. Request order creation from server (POST /api/orders/create)
+      const res = await fetch("/api/orders/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cardModel: product.slug,
+          cardColor: selectedColor,
+          cardDetails,
+          shippingAddress: {
+            fullName: address.recipientName || cardDetails.fullName,
+            phone: address.phone,
+            addressLine1: address.street,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+          },
+          paymentMethod: paymentMode,
+          couponCode: couponApplied ? coupon : null,
+        }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok || !data || !data.success) {
+        throw new Error(data?.error || "Failed to initialize order. Please try again.")
+      }
+
+      // 3. If Cash on Delivery, complete immediately
+      if (paymentMode === "cod" || data.isCod) {
+        setOrderConfirmation({
+          orderId: data.orderId,
+          amount: finalAmount,
+          isCod: true,
+        })
+        setIsCompleted(true)
+        setIsSubmitting(false)
+        if (typeof window !== "undefined") {
+          window.scrollTo({ top: 0, behavior: "smooth" })
+        }
+        return
+      }
+
+      // 4. Online Payment: Load Razorpay Checkout and launch payment popup
+      const isLoaded = await loadRazorpayScript()
+      if (!isLoaded || !window.Razorpay) {
+        throw new Error("Could not load Razorpay payment gateway. Please check your internet connection.")
+      }
+
+      const options: RazorpayOptions = {
+        key: data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+        amount: data.amount,
+        currency: data.currency || "INR",
+        name: "TapOnce",
+        description: `${product.name} NFC Smart Card`,
+        image: "/Taponce_logo.png",
+        order_id: data.razorpayOrderId,
+        prefill: {
+          name: address.recipientName || cardDetails.fullName,
+          email: cardDetails.email,
+          contact: address.phone,
+          method: upiSelection.method === "cards" ? "card" : "upi",
+          ...(upiSelection.method === "vpa" && upiSelection.vpa
+            ? { vpa: upiSelection.vpa }
+            : {}),
+        },
+        theme: {
+          color: "#00695C",
+        },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: "Pay using UPI",
+                instruments: [
+                  {
+                    method: "upi",
+                    flows: upiSelection.method === "qr" ? ["qr"] : ["intent", "qr", "collect"],
+                    apps:
+                      upiSelection.method === "apps" && upiSelection.appId
+                        ? [upiSelection.appId]
+                        : ["google_pay", "phonepe", "paytm", "bhim"],
+                  },
+                ],
+              },
+            },
+            sequence: upiSelection.method === "cards" ? [] : ["block.upi"],
+          },
+        },
+        handler: async (paymentResponse: RazorpaySuccessResponse) => {
+          try {
+            // Verify cryptographic signature with the backend
+            const verifyRes = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: data.orderId,
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature,
+              }),
+            })
+
+            const verifyData = await verifyRes.json().catch(() => ({}))
+
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || "Payment signature verification failed.")
+            }
+
+            setOrderConfirmation({
+              orderId: data.orderId,
+              amount: finalAmount,
+              isCod: false,
+            })
+            setIsCompleted(true)
+            if (typeof window !== "undefined") {
+              window.scrollTo({ top: 0, behavior: "smooth" })
+            }
+          } catch (verifyErr: any) {
+            setPaymentError(verifyErr.message || "Payment verification failed. Please contact support.")
+          } finally {
+            setIsSubmitting(false)
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsSubmitting(false)
+            setPaymentError("Payment checkout was cancelled. You can retry whenever you're ready.")
+          },
+        },
+      }
+
+      const razorpayInstance = new window.Razorpay(options)
+      razorpayInstance.on("payment.failed", (failure: any) => {
+        setIsSubmitting(false)
+        setPaymentError(
+          failure.error?.description || "Payment failed or was declined by your bank. Please retry."
+        )
+      })
+
+      razorpayInstance.open()
+    } catch (err: any) {
+      console.error("[handlePlaceOrder] Error:", err)
+      setPaymentError(err.message || "Something went wrong while placing your order.")
+      setIsSubmitting(false)
     }
   }
 
@@ -1063,6 +1223,18 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                               </span>
                             </div>
 
+                            {/* Interactive UPI Apps, Dynamic QR Code & NetBanking Selector */}
+                            {paymentMode === "online" && (
+                              <div className="pt-1">
+                                <UpiPaymentSelector
+                                  amount={finalAmount}
+                                  productName={product.name}
+                                  onSelectionChange={setUpiSelection}
+                                  disabled={isSubmitting}
+                                />
+                              </div>
+                            )}
+
                             <div
                               onClick={() => setPaymentMode("cod")}
                               className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
@@ -1137,6 +1309,13 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                           </div>
                         )}
 
+                        {paymentError && (
+                          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 shrink-0" />
+                            <span>{paymentError}</span>
+                          </div>
+                        )}
+
                         <div className="flex gap-3 pt-4">
                           <Button
                             type="button"
@@ -1155,7 +1334,9 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                             className="flex-1 h-12 text-sm font-bold bg-accent hover:bg-accent-hover text-white rounded-xl shadow-lg flex items-center justify-center gap-2"
                           >
                             {isSubmitting ? (
-                              "Submitting Order..."
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" /> Processing Payment...
+                              </>
                             ) : product.isCustomPricing ? (
                               <>
                                 Submit Enterprise Order <CheckCircle2 className="h-4 w-4" />
@@ -1164,9 +1345,31 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                               <>
                                 Place COD Order (₹{finalAmount}) <CheckCircle2 className="h-4 w-4" />
                               </>
+                            ) : upiSelection.method === "apps" ? (
+                              <>
+                                Pay ₹{finalAmount} via{" "}
+                                {upiSelection.appId === "gpay"
+                                  ? "Google Pay"
+                                  : upiSelection.appId === "phonepe"
+                                  ? "PhonePe"
+                                  : upiSelection.appId === "paytm"
+                                  ? "Paytm"
+                                  : upiSelection.appId === "slice"
+                                  ? "Slice UPI"
+                                  : "CRED Pay"}{" "}
+                                <CheckCircle2 className="h-4 w-4" />
+                              </>
+                            ) : upiSelection.method === "qr" ? (
+                              <>
+                                Scan & Pay ₹{finalAmount} via UPI QR <CheckCircle2 className="h-4 w-4" />
+                              </>
+                            ) : upiSelection.method === "vpa" ? (
+                              <>
+                                Pay ₹{finalAmount} with UPI ID <CheckCircle2 className="h-4 w-4" />
+                              </>
                             ) : (
                               <>
-                                Confirm & Order Now (₹{finalAmount}) <CheckCircle2 className="h-4 w-4" />
+                                Pay ₹{finalAmount} via Card / NetBanking <CheckCircle2 className="h-4 w-4" />
                               </>
                             )}
                           </Button>

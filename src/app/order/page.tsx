@@ -27,6 +27,7 @@ import Link from "next/link"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
 import { CARD_VARIANTS } from "@/lib/pricing"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
+import { UpiPaymentSelector, type UpiSelection } from "@/components/ui/upi-payment-selector"
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -73,6 +74,10 @@ export default function OrderPage() {
   // Step 4: Payment
   // paymentMode: "online" | "cod"
   const [paymentMode, setPaymentMode] = React.useState<"online" | "cod">("online")
+  const [upiSelection, setUpiSelection] = React.useState<UpiSelection>({
+    method: "apps",
+    appId: "gpay",
+  })
   const [coupon, setCoupon] = React.useState("")
   const [discount, setDiscount] = React.useState(0)
   const [couponApplied, setCouponApplied] = React.useState(false)
@@ -160,7 +165,7 @@ export default function OrderPage() {
       }
 
       const options: RazorpayOptions = {
-        key: data.keyId,
+        key: data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         amount: data.amount,
         currency: data.currency || "INR",
         name: "TapOnce",
@@ -171,9 +176,33 @@ export default function OrderPage() {
           name: address.recipientName,
           email: cardDetails.email,
           contact: address.phone,
+          method: upiSelection.method === "cards" ? "card" : "upi",
+          ...(upiSelection.method === "vpa" && upiSelection.vpa
+            ? { vpa: upiSelection.vpa }
+            : {}),
         },
         theme: {
           color: "#00695C",
+        },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: "Pay using UPI",
+                instruments: [
+                  {
+                    method: "upi",
+                    flows: upiSelection.method === "qr" ? ["qr"] : ["intent", "qr", "collect"],
+                    apps:
+                      upiSelection.method === "apps" && upiSelection.appId
+                        ? [upiSelection.appId]
+                        : ["google_pay", "phonepe", "paytm", "bhim"],
+                  },
+                ],
+              },
+            },
+            sequence: upiSelection.method === "cards" ? [] : ["block.upi"],
+          },
         },
         handler: async (paymentResponse: RazorpaySuccessResponse) => {
           try {
@@ -773,6 +802,18 @@ export default function OrderPage() {
                           </span>
                         </div>
 
+                        {/* Interactive UPI Apps, Dynamic QR Code & NetBanking Selector */}
+                        {paymentMode === "online" && (
+                          <div className="pt-1">
+                            <UpiPaymentSelector
+                              amount={finalAmount}
+                              productName={selectedCard.name}
+                              onSelectionChange={setUpiSelection}
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                        )}
+
                         {/* Option 2: Cash on Delivery */}
                         <div
                           onClick={() => setPaymentMode("cod")}
@@ -851,9 +892,31 @@ export default function OrderPage() {
                             <>
                               Place COD Order (₹{finalAmount}) <CheckCircle2 className="h-5 w-5" />
                             </>
+                          ) : upiSelection.method === "apps" ? (
+                            <>
+                              Pay ₹{finalAmount} via{" "}
+                              {upiSelection.appId === "gpay"
+                                ? "Google Pay"
+                                : upiSelection.appId === "phonepe"
+                                ? "PhonePe"
+                                : upiSelection.appId === "paytm"
+                                ? "Paytm"
+                                : upiSelection.appId === "slice"
+                                ? "Slice UPI"
+                                : "CRED Pay"}{" "}
+                              <CheckCircle2 className="h-5 w-5" />
+                            </>
+                          ) : upiSelection.method === "qr" ? (
+                            <>
+                              Scan & Pay ₹{finalAmount} via UPI QR <CheckCircle2 className="h-5 w-5" />
+                            </>
+                          ) : upiSelection.method === "vpa" ? (
+                            <>
+                              Pay ₹{finalAmount} with UPI ID <CheckCircle2 className="h-5 w-5" />
+                            </>
                           ) : (
                             <>
-                              Pay ₹{finalAmount} with Razorpay <CheckCircle2 className="h-5 w-5" />
+                              Pay ₹{finalAmount} via Card / NetBanking <CheckCircle2 className="h-5 w-5" />
                             </>
                           )}
                         </Button>
