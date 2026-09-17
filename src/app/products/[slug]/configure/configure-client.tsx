@@ -182,7 +182,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
   })
 
   // Step 4: Payment & Discounts
-  const [paymentMode, setPaymentMode] = React.useState<"online" | "cod">("online")
+  const [paymentMode, setPaymentMode] = React.useState<"online" | "upi" | "cod">("online")
   const [coupon, setCoupon] = React.useState("")
   const [discount, setDiscount] = React.useState(0)
   const [couponApplied, setCouponApplied] = React.useState(false)
@@ -237,13 +237,18 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
     })
   }, [])
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (
+    preferredMode?: "online" | "upi",
+    preferredApp?: string
+  ) => {
     if (isSubmitting) return
     setIsSubmitting(true)
     setPaymentError(null)
 
+    const activeMode = preferredMode || (paymentMode === "cod" ? "cod" : paymentMode)
+
     try {
-      console.log("[handlePlaceOrder] Initiating order for:", product.slug, "Mode:", paymentMode)
+      console.log("[handlePlaceOrder] Initiating order for:", product.slug, "Mode:", activeMode, "PreferredApp:", preferredApp)
 
       // 1. Corporate inquiry handling (custom volume pricing)
       if (product.isCustomPricing || product.slug === "corporate") {
@@ -302,7 +307,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
             state: address.state,
             pincode: address.pincode,
           },
-          paymentMethod: paymentMode,
+          paymentMethod: activeMode === "cod" ? "cod" : "online",
           couponCode: couponApplied ? coupon : null,
         }),
       })
@@ -315,7 +320,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
       }
 
       // 3. If Cash on Delivery, complete immediately
-      if (paymentMode === "cod" || data.isCod) {
+      if (activeMode === "cod" || data.isCod) {
         console.log("[handlePlaceOrder] COD confirmed with order ID:", data.orderId)
         setOrderConfirmation({
           orderId: data.orderId,
@@ -339,7 +344,16 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
         )
       }
 
-      console.log("[handlePlaceOrder] Configuring Razorpay options for order:", data.razorpayOrderId)
+      const isUpiPreferred = activeMode === "upi"
+
+      console.log(
+        "[handlePlaceOrder] Configuring Razorpay options for order:",
+        data.razorpayOrderId,
+        "isUpiPreferred:",
+        isUpiPreferred,
+        "preferredApp:",
+        preferredApp
+      )
       const options: RazorpayOptions = {
         key: data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         amount: data.amount,
@@ -352,10 +366,35 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
           name: address.recipientName || cardDetails.fullName,
           email: cardDetails.email,
           contact: address.phone,
+          ...(isUpiPreferred ? { method: "upi" } : {}),
         },
         theme: {
           color: "#00695C",
         },
+        ...(isUpiPreferred
+          ? {
+              config: {
+                display: {
+                  blocks: {
+                    upi: {
+                      name: "Pay using UPI",
+                      instruments: [
+                        {
+                          method: "upi",
+                          flows: ["intent", "qr", "collect"],
+                          ...(preferredApp ? { apps: [preferredApp] } : {}),
+                        },
+                      ],
+                    },
+                  },
+                  sequence: ["block.upi"],
+                  preferences: {
+                    show_default_blocks: true,
+                  },
+                },
+              },
+            }
+          : {}),
         handler: async (paymentResponse: RazorpaySuccessResponse) => {
           console.log("[Razorpay] Payment successful response received:", paymentResponse.razorpay_payment_id)
           try {
@@ -1197,11 +1236,41 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                               </span>
                             </div>
 
-                            {/* Option 2 (Visual): UPI Payment */}
-                            <div className="card-selectable select-none p-4 sm:p-5 rounded-2xl border-2 border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface transition-all duration-200">
+                            {/* Option 2: UPI Payment */}
+                            <div
+                              role="radio"
+                              aria-checked={paymentMode === "upi"}
+                              tabIndex={0}
+                              onClick={() => {
+                                setPaymentMode("upi")
+                                handlePlaceOrder("upi")
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") {
+                                  e.preventDefault()
+                                  setPaymentMode("upi")
+                                  handlePlaceOrder("upi")
+                                }
+                              }}
+                              className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 ${
+                                paymentMode === "upi"
+                                  ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
+                                  : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
+                              }`}
+                            >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3.5">
-                                  <div className="w-5 h-5 rounded-full border-2 border-muted/50 bg-transparent flex items-center justify-center transition-all duration-200" />
+                                  <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                                      paymentMode === "upi"
+                                        ? "border-accent bg-accent"
+                                        : "border-muted/50 bg-transparent"
+                                    }`}
+                                  >
+                                    {paymentMode === "upi" && (
+                                      <div className="w-2 h-2 rounded-full bg-white" />
+                                    )}
+                                  </div>
                                   <div>
                                     <div className="text-sm font-bold text-foreground flex items-center gap-2">
                                       <Smartphone className="h-4 w-4 text-accent" />
@@ -1219,25 +1288,53 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
 
                               {/* 4 App Icon Badges in a Row */}
                               <div className="grid grid-cols-4 gap-2.5 mt-3.5 pt-3.5 border-t border-border/60">
-                                <div className="p-2.5 rounded-xl bg-surface-hover/80 border border-border flex flex-col items-center justify-center text-center">
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPaymentMode("upi")
+                                    handlePlaceOrder("upi", "google_pay")
+                                  }}
+                                  className="p-2.5 rounded-xl bg-surface border border-border hover:border-accent hover:bg-accent/5 active:scale-95 transition-all duration-150 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs"
+                                >
                                   <GooglePayBadgeIcon className="h-5 w-5 mb-1" />
                                   <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
                                     Google Pay
                                   </span>
                                 </div>
-                                <div className="p-2.5 rounded-xl bg-surface-hover/80 border border-border flex flex-col items-center justify-center text-center">
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPaymentMode("upi")
+                                    handlePlaceOrder("upi", "phonepe")
+                                  }}
+                                  className="p-2.5 rounded-xl bg-surface border border-border hover:border-accent hover:bg-accent/5 active:scale-95 transition-all duration-150 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs"
+                                >
                                   <PhonePeBadgeIcon className="h-5 w-5 mb-1" />
                                   <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
                                     PhonePe
                                   </span>
                                 </div>
-                                <div className="p-2.5 rounded-xl bg-surface-hover/80 border border-border flex flex-col items-center justify-center text-center">
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPaymentMode("upi")
+                                    handlePlaceOrder("upi", "paytm")
+                                  }}
+                                  className="p-2.5 rounded-xl bg-surface border border-border hover:border-accent hover:bg-accent/5 active:scale-95 transition-all duration-150 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs"
+                                >
                                   <PaytmBadgeIcon className="h-5 w-5 mb-1" />
                                   <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
                                     Paytm
                                   </span>
                                 </div>
-                                <div className="p-2.5 rounded-xl bg-surface-hover/80 border border-border flex flex-col items-center justify-center text-center">
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPaymentMode("upi")
+                                    handlePlaceOrder("upi")
+                                  }}
+                                  className="p-2.5 rounded-xl bg-surface border border-border hover:border-accent hover:bg-accent/5 active:scale-95 transition-all duration-150 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xs"
+                                >
                                   <GenericUpiBadgeIcon className="h-5 w-auto mb-1" />
                                   <span className="font-semibold text-foreground text-[10px] sm:text-[11px] block truncate">
                                     UPI
@@ -1357,7 +1454,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                           </Button>
                           <Button
                             type="button"
-                            onClick={handlePlaceOrder}
+                            onClick={() => handlePlaceOrder()}
                             disabled={isSubmitting}
                             size="lg"
                             className="flex-1 h-12 text-sm font-bold bg-accent hover:bg-accent-hover text-white rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all duration-200"
@@ -1373,6 +1470,10 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                             ) : paymentMode === "cod" ? (
                               <>
                                 Place COD Order (₹{finalAmount}) <CheckCircle2 className="h-4 w-4" />
+                              </>
+                            ) : paymentMode === "upi" ? (
+                              <>
+                                Pay ₹{finalAmount} via UPI <CheckCircle2 className="h-4 w-4" />
                               </>
                             ) : (
                               <>
