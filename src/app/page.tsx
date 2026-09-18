@@ -288,7 +288,7 @@ export default function Home() {
                 <CardDescription className="text-muted">Fully branded corporate cards for teams.</CardDescription>
               </CardHeader>
               <CardFooter className="mt-auto">
-                <Button variant="outline" className="w-full border-2 border-indigo-600 dark:border-accent text-indigo-700 dark:text-accent hover:bg-indigo-600 hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_18px_rgba(99,102,241,0.35)] font-bold" asChild><Link href="/contact">Get a Quote</Link></Button>
+                <Button variant="outline" className="w-full border-2 border-indigo-600 dark:border-accent text-indigo-700 dark:text-accent hover:bg-indigo-600 hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_18px_rgba(99,102,241,0.35)] font-bold" asChild><Link href="/products/corporate">Details</Link></Button>
               </CardFooter>
             </Card>
           </div>

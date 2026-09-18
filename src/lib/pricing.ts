@@ -54,12 +54,27 @@ export const CARD_VARIANTS: CardVariant[] = [
       { id: "metal-black", name: "Stealth Black Metal", bg: "#18181b", text: "#ffffff" },
       { id: "silver", name: "Brushed Steel", bg: "#d4d4d8", text: "#09090b" }
     ]
+  },
+  {
+    id: "corporate",
+    name: "Corporate / Bulk Orders",
+    price: 1499,
+    material: "Custom Enterprise Finishes (PVC / Metal)",
+    description: "Custom branded cards for teams and businesses — volume discounts available.",
+    image: "/Taponce_logo_dark.png",
+    colors: [
+      { id: "custom", name: "Bespoke Brand Colors", bg: "#1e293b", text: "#ffffff" },
+      { id: "navy", name: "Executive Navy", bg: "#051f44", text: "#ffffff" },
+      { id: "black", name: "Corporate Black", bg: "#0f172a", text: "#ffffff" }
+    ]
   }
 ]
 
 export interface PricingResult {
   card: CardVariant
-  basePrice: number // in Rupees
+  quantity: number
+  unitPrice: number // in Rupees per card
+  basePrice: number // in Rupees (unitPrice * quantity)
   discount: number // in Rupees
   finalPrice: number // in Rupees
   amountInPaise: number // for Razorpay
@@ -67,27 +82,35 @@ export interface PricingResult {
   couponCode: string | null
 }
 
-export function calculateOrderPricing(cardId: string, couponCode?: string | null): PricingResult {
+export function calculateOrderPricing(
+  cardId: string,
+  couponCode?: string | null,
+  quantity: number = 1
+): PricingResult {
+  const qty = Math.max(1, Math.min(500, Math.floor(Number(quantity) || 1)))
   const card = CARD_VARIANTS.find(c => c.id === cardId) || CARD_VARIANTS[1] // defaults to premium
   const cleanCoupon = (couponCode || "").trim().toUpperCase()
 
+  const subtotal = card.price * qty
   let discount = 0
   let couponApplied = false
 
   if (cleanCoupon === "TAPONCE10" || cleanCoupon === "WELCOME") {
-    discount = Math.round(card.price * 0.1)
+    discount = Math.round(subtotal * 0.1)
     couponApplied = true
   } else if (cleanCoupon === "FREE") {
-    discount = card.price
+    discount = subtotal
     couponApplied = true
   }
 
-  const finalPrice = Math.max(0, card.price - discount)
+  const finalPrice = Math.max(0, subtotal - discount)
   const amountInPaise = finalPrice * 100
 
   return {
     card,
-    basePrice: card.price,
+    quantity: qty,
+    unitPrice: card.price,
+    basePrice: subtotal,
     discount,
     finalPrice,
     amountInPaise,

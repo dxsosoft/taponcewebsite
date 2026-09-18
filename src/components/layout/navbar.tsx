@@ -38,22 +38,28 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/60">
       <div className="container mx-auto px-4 md:px-6 h-16 max-w-7xl flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center group transition-all duration-300 hover:drop-shadow-[0_0_10px_rgba(0,105,92,0.6)]">
+          <Link
+            href="/"
+            className="flex items-center h-10 w-auto max-w-[160px] max-h-10 shrink-0 overflow-hidden group transition-all duration-300 hover:drop-shadow-[0_0_10px_rgba(0,105,92,0.6)]"
+            style={{ height: "40px", maxHeight: "40px", width: "auto", maxWidth: "160px" }}
+          >
             <Image 
               src="/Taponce_logo.png" 
               alt="TapOnce" 
-              width={837} 
-              height={216} 
-              className={`h-10 w-auto object-contain transition-all duration-300 ${mounted ? (isDark ? "hidden" : "block") : "dark:hidden"}`} 
+              width={155} 
+              height={40} 
+              className={`h-9 sm:h-10 w-auto max-w-[155px] max-h-10 object-contain shrink-0 transition-all duration-300 ${mounted ? (isDark ? "hidden" : "block") : "dark:hidden"}`} 
+              style={{ height: "40px", maxHeight: "40px", width: "auto", maxWidth: "155px" }}
               priority 
               unoptimized
             />
             <Image 
               src="/Taponce_logo_dark.png" 
               alt="TapOnce" 
-              width={837} 
-              height={216} 
-              className={`h-10 w-auto object-contain transition-all duration-300 ${mounted ? (isDark ? "block" : "hidden") : "hidden dark:block"}`} 
+              width={155} 
+              height={40} 
+              className={`h-9 sm:h-10 w-auto max-w-[155px] max-h-10 object-contain shrink-0 transition-all duration-300 ${mounted ? (isDark ? "block" : "hidden") : "hidden dark:block"}`} 
+              style={{ height: "40px", maxHeight: "40px", width: "auto", maxWidth: "155px" }}
               priority 
               unoptimized
             />

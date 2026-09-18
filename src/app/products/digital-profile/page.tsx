@@ -1,8 +1,7 @@
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { DigitalProfileHeroButtons } from "@/components/digital-profile-hero-buttons"
 
 export default function Page() {
   return (
@@ -15,14 +14,7 @@ export default function Page() {
             <p className="text-xl text-muted mb-10 max-w-2xl">
               Your smart digital identity in the cloud.
             </p>
-            <div className="flex gap-4">
-              <Button size="lg" asChild>
-                <Link href="/products">Get Your Card</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/contact">Contact Sales</Link>
-              </Button>
-            </div>
+            <DigitalProfileHeroButtons />
           </div>
         </Section>
         <Section className="py-24">

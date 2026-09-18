@@ -22,10 +22,12 @@ import {
   Loader2,
   Banknote,
   CreditCard,
+  Smartphone,
 } from "lucide-react"
 import Link from "next/link"
 import Script from "next/script"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
+import { CardBadge } from "@/components/ui/card-badge"
 import { CARD_VARIANTS } from "@/lib/pricing"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
 
@@ -81,6 +83,19 @@ function loadRazorpayScript(timeoutMs = 6000): Promise<boolean> {
   })
 }
 
+function CardTierBadge({ tierId, isSelected = false }: { tierId: string; isSelected?: boolean }) {
+  return (
+    <div className="w-13 h-12 sm:w-14 sm:h-14 flex items-center justify-center shrink-0">
+      <CardBadge
+        tierId={tierId}
+        isSelected={isSelected}
+        size={50}
+        rotate={-2}
+      />
+    </div>
+  )
+}
+
 export default function OrderPage() {
   const [step, setStep] = React.useState(1)
 
@@ -109,8 +124,10 @@ export default function OrderPage() {
   })
 
   // Step 4: Payment
-  // paymentMode: "online" | "cod"
-  const [paymentMode, setPaymentMode] = React.useState<"online" | "cod">("online")
+  // paymentMode: "online" | "upi" | "cod"
+  const [paymentMode, setPaymentMode] = React.useState<"online" | "upi" | "cod">("online")
+  const [quantity, setQuantity] = React.useState(1)
+  const [quantityInput, setQuantityInput] = React.useState("1")
   const [coupon, setCoupon] = React.useState("")
   const [discount, setDiscount] = React.useState(0)
   const [couponApplied, setCouponApplied] = React.useState(false)
@@ -123,20 +140,33 @@ export default function OrderPage() {
     orderId: string
     isCod: boolean
     amount: number
+    quantity?: number
     paymentId?: string
   } | null>(null)
 
   const selectedCard = CARD_VARIANTS.find((c) => c.id === selectedCardId) || CARD_VARIANTS[1]
+  const baseSubtotal = selectedCard.price * quantity
+
+  React.useEffect(() => {
+    if (couponApplied) {
+      const clean = coupon.trim().toUpperCase()
+      if (clean === "TAPONCE10" || clean === "WELCOME") {
+        setDiscount(Math.round(baseSubtotal * 0.1))
+      } else if (clean === "FREE") {
+        setDiscount(baseSubtotal)
+      }
+    }
+  }, [quantity, selectedCardId, couponApplied, coupon, baseSubtotal])
 
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault()
     const clean = coupon.trim().toUpperCase()
     if (clean === "TAPONCE10" || clean === "WELCOME") {
-      setDiscount(Math.round(selectedCard.price * 0.1))
+      setDiscount(Math.round(baseSubtotal * 0.1))
       setCouponApplied(true)
       setErrorMessage(null)
     } else if (clean === "FREE") {
-      setDiscount(selectedCard.price)
+      setDiscount(baseSubtotal)
       setCouponApplied(true)
       setErrorMessage(null)
     } else {
@@ -144,7 +174,31 @@ export default function OrderPage() {
     }
   }
 
-  const finalAmount = Math.max(0, selectedCard.price - discount)
+  const finalAmount = Math.max(0, baseSubtotal - discount)
+
+  const minQty = selectedCardId === "corporate" ? 10 : 1
+  const maxQty = 10000
+
+  const handleQuantityInputChange = (val: string) => {
+    setQuantityInput(val)
+    const parsed = parseInt(val, 10)
+    if (!isNaN(parsed) && parsed >= minQty) {
+      setQuantity(Math.min(maxQty, parsed))
+    }
+  }
+
+  const handleQuantityInputBlur = () => {
+    const parsed = parseInt(quantityInput, 10)
+    const clamped = isNaN(parsed) || parsed < minQty ? minQty : Math.min(maxQty, parsed)
+    setQuantity(clamped)
+    setQuantityInput(String(clamped))
+  }
+
+  const handleStepQuantity = (delta: number) => {
+    const next = Math.max(minQty, Math.min(maxQty, quantity + delta))
+    setQuantity(next)
+    setQuantityInput(String(next))
+  }
 
   // Eagerly preload Razorpay script in background when component mounts
   React.useEffect(() => {
@@ -174,8 +228,9 @@ export default function OrderPage() {
             state: address.state,
             pincode: address.pincode,
           },
-          paymentMethod: paymentMode,
+          paymentMethod: paymentMode === "cod" ? "cod" : "online",
           couponCode: couponApplied ? coupon : null,
+          quantity,
         }),
       })
 
@@ -191,6 +246,7 @@ export default function OrderPage() {
           orderId: data.orderId,
           isCod: true,
           amount: data.amount,
+          quantity,
         })
         setIsCompleted(true)
         setIsSubmitting(false)
@@ -204,22 +260,51 @@ export default function OrderPage() {
         throw new Error("Could not load Razorpay payment gateway. Please check your network connection.")
       }
 
+      const isUpiMode = paymentMode === "upi"
+
       const options: RazorpayOptions = {
         key: data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
         amount: data.amount,
         currency: data.currency || "INR",
         name: "TapOnce",
-        description: `${selectedCard.name} NFC Smart Card`,
+        description: `${selectedCard.name} NFC Smart Card (${quantity}x)`,
         image: "/Taponce_logo.png",
         order_id: data.razorpayOrderId,
         prefill: {
           name: address.recipientName,
           email: cardDetails.email,
           contact: address.phone,
+          ...(isUpiMode ? { method: "upi" } : {}),
         },
         theme: {
           color: "#00695C",
         },
+        ...(isUpiMode
+          ? {
+              method: {
+                upi: true,
+                card: false,
+                netbanking: false,
+                wallet: false,
+                emi: false,
+                paylater: false,
+              },
+              config: {
+                display: {
+                  blocks: {
+                    upi: {
+                      name: "Pay via UPI",
+                      instruments: [{ method: "upi" }],
+                    },
+                  },
+                  sequence: ["block.upi"],
+                  preferences: {
+                    show_default_blocks: false,
+                  },
+                },
+              },
+            }
+          : {}),
         handler: async (paymentResponse: RazorpaySuccessResponse) => {
           try {
             // Verify cryptographic signature with the backend
@@ -245,6 +330,7 @@ export default function OrderPage() {
               isCod: false,
               amount: finalAmount,
               paymentId: paymentResponse.razorpay_payment_id,
+              quantity,
             })
             setIsCompleted(true)
             window.scrollTo({ top: 0, behavior: "smooth" })
@@ -332,6 +418,10 @@ export default function OrderPage() {
                   <span className="font-semibold text-accent">
                     {selectedCard.name} ({selectedColor.toUpperCase()})
                   </span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted">Quantity:</span>
+                  <span className="font-semibold">{confirmedOrder.quantity || 1} card(s)</span>
                 </div>
                 <div className="flex justify-between border-b border-border pb-2">
                   <span className="text-muted">Recipient Name:</span>
@@ -432,57 +522,78 @@ export default function OrderPage() {
                       <h2 className="text-2xl font-bold">1. Select Card Model & Color</h2>
 
                       <div className="grid gap-4">
-                        {CARD_VARIANTS.map((card) => (
-                          <div
-                            key={card.id}
-                            role="radio"
-                            aria-checked={selectedCardId === card.id}
-                            tabIndex={0}
-                            onClick={() => {
-                              setSelectedCardId(card.id)
-                              setSelectedColor(card.colors[0].id)
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === " " || e.key === "Enter") {
-                                e.preventDefault()
+                        {CARD_VARIANTS.map((card) => {
+                          const isCorporate = card.id === "corporate"
+                          const isSelected = selectedCardId === card.id
+                          return (
+                            <div
+                              key={card.id}
+                              role="radio"
+                              aria-checked={isSelected}
+                              tabIndex={0}
+                              onClick={() => {
                                 setSelectedCardId(card.id)
                                 setSelectedColor(card.colors[0].id)
-                              }
-                            }}
-                            className={`card-selectable select-none cursor-pointer p-5 rounded-2xl border-2 transition-all flex justify-between items-center ${
-                              selectedCardId === card.id
-                                ? "border-accent bg-accent/5 shadow-md"
-                                : "border-border hover:border-accent/40 bg-surface"
-                            }`}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="w-16 shrink-0">
-                                <SmartCardVisual
-                                  slug={card.id as any}
-                                  colorId={selectedCardId === card.id ? selectedColor : card.colors[0].id}
-                                  size="sm"
-                                  interactive={false}
-                                  showDetails={false}
+                                if (card.id === "corporate" && quantity < 10) {
+                                  setQuantity(10)
+                                  setQuantityInput("10")
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") {
+                                  e.preventDefault()
+                                  setSelectedCardId(card.id)
+                                  setSelectedColor(card.colors[0].id)
+                                  if (card.id === "corporate" && quantity < 10) {
+                                    setQuantity(10)
+                                    setQuantityInput("10")
+                                  }
+                                }
+                              }}
+                              className={`card-selectable select-none cursor-pointer p-5 rounded-2xl border-2 transition-all flex justify-between items-center ${
+                                isSelected
+                                  ? "border-accent bg-accent/5 shadow-md"
+                                  : "border-border hover:border-accent/40 bg-surface"
+                              }`}
+                            >
+                              <div className="flex items-center gap-4">
+                                <CardTierBadge
+                                  tierId={card.id}
+                                  isSelected={isSelected}
                                 />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-bold text-lg">{card.name}</h3>
-                                  {card.popular && (
-                                    <span className="bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                      POPULAR
-                                    </span>
-                                  )}
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="font-bold text-lg">{card.name}</h3>
+                                    {card.popular && (
+                                      <span className="bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                        POPULAR
+                                      </span>
+                                    )}
+                                    {isCorporate && (
+                                      <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                        Enterprise
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted mt-0.5">{card.description}</p>
                                 </div>
-                                <p className="text-xs text-muted mt-0.5">{card.description}</p>
+                              </div>
+                              <div className="text-right pl-4 shrink-0">
+                                {isCorporate ? (
+                                  <>
+                                    <div className="text-lg font-bold text-foreground">Custom Pricing</div>
+                                    <span className="text-[11px] text-muted">Volume Discounts</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="text-2xl font-bold text-foreground">₹{card.price}</div>
+                                    <span className="text-[11px] text-muted">Free Shipping</span>
+                                  </>
+                                )}
                               </div>
                             </div>
-                            <div className="text-right pl-4">
-                              <div className="text-2xl font-bold text-foreground">₹{card.price}</div>
-                              <span className="text-[11px] text-muted">Free Shipping</span>
-                            </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
 
                       {/* Color Selector */}
@@ -510,6 +621,70 @@ export default function OrderPage() {
                             </button>
                           ))}
                         </div>
+                      </div>
+
+                      {/* Quantity Selector */}
+                      <div className="pt-4 border-t border-border">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-bold text-foreground">Quantity:</label>
+                              {selectedCard.id === "corporate" && (
+                                <span className="text-[10px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                                  10-Card Minimum
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted">
+                              {selectedCard.id === "corporate"
+                                ? "Exact number of custom cards for your team or organization"
+                                : "Number of cards to customize & order"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                            <div className="inline-flex items-center gap-2 bg-surface-hover/80 border border-border rounded-xl p-1.5 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 transition-all">
+                              <button
+                                type="button"
+                                onClick={() => handleStepQuantity(-1)}
+                                disabled={quantity <= minQty}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-base text-foreground hover:bg-surface border border-transparent hover:border-border disabled:opacity-30 transition-all cursor-pointer select-none"
+                                aria-label="Decrease quantity"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                min={minQty}
+                                max={maxQty}
+                                value={quantityInput}
+                                onChange={(e) => handleQuantityInputChange(e.target.value)}
+                                onBlur={handleQuantityInputBlur}
+                                className="w-16 sm:w-20 text-center font-bold bg-transparent text-sm focus:outline-none"
+                                aria-label="Card quantity"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleStepQuantity(1)}
+                                disabled={quantity >= maxQty}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-base text-foreground hover:bg-surface border border-transparent hover:border-border disabled:opacity-30 transition-all cursor-pointer select-none"
+                                aria-label="Increase quantity"
+                              >
+                                +
+                              </button>
+                            </div>
+                            <span className="text-xs font-medium text-muted">cards</span>
+                          </div>
+                        </div>
+                        {selectedCard.id === "corporate" && (
+                          <p className="text-[11px] text-muted mt-2">
+                            Volume tier discounts automatically applied for 50+ cards.
+                          </p>
+                        )}
+                        {selectedCard.id === "corporate" && quantity < 10 && (
+                          <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3 shrink-0" /> Minimum 10 cards required for corporate orders.
+                          </p>
+                        )}
                       </div>
 
                       <Button
@@ -849,7 +1024,52 @@ export default function OrderPage() {
                           </span>
                         </div>
 
-                        {/* Option 2: Cash on Delivery */}
+                        {/* Option 2: UPI Payment */}
+                        <div
+                          role="radio"
+                          aria-checked={paymentMode === "upi"}
+                          tabIndex={0}
+                          onClick={() => setPaymentMode("upi")}
+                          onKeyDown={(e) => {
+                            if (e.key === " " || e.key === "Enter") {
+                              e.preventDefault()
+                              setPaymentMode("upi")
+                            }
+                          }}
+                          className={`card-selectable select-none cursor-pointer p-4 sm:p-5 rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${
+                            paymentMode === "upi"
+                              ? "border-accent bg-accent/5 shadow-sm ring-1 ring-accent/20"
+                              : "border-border hover:border-accent/40 hover:bg-surface-hover/50 bg-surface"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <div
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                                paymentMode === "upi"
+                                  ? "border-accent bg-accent"
+                                  : "border-muted/50 bg-transparent"
+                              }`}
+                            >
+                              {paymentMode === "upi" && (
+                                <div className="w-2 h-2 rounded-full bg-white"></div>
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                                <Smartphone className="h-4 w-4 text-accent" />
+                                UPI Payment
+                              </div>
+                              <div className="text-xs text-muted mt-0.5">
+                                UPI QR code, Google Pay, PhonePe, Paytm, or UPI ID
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                            Instant QR
+                          </span>
+                        </div>
+
+                        {/* Option 3: Cash on Delivery */}
                         <div
                           role="radio"
                           aria-checked={paymentMode === "cod"}
@@ -936,6 +1156,10 @@ export default function OrderPage() {
                             <>
                               Place COD Order (₹{finalAmount}) <CheckCircle2 className="h-5 w-5" />
                             </>
+                          ) : paymentMode === "upi" ? (
+                            <>
+                              Pay ₹{finalAmount} via UPI <CheckCircle2 className="h-5 w-5" />
+                            </>
                           ) : (
                             <>
                               Pay ₹{finalAmount} Online <CheckCircle2 className="h-5 w-5" />
@@ -987,10 +1211,22 @@ export default function OrderPage() {
                       <CardTitle className="text-base font-bold">Order Summary</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-4 space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted">{selectedCard.name} Card</span>
-                        <span className="font-semibold">₹{selectedCard.price}</span>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-muted">{selectedCard.name} ({quantity}x)</span>
+                          {selectedCard.id === "corporate" && (
+                            <span className="block text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                              Starting rate • Final pricing confirmed after order review
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-semibold">₹{selectedCard.price * quantity}</span>
                       </div>
+                      {quantity > 1 && (
+                        <div className="text-[11px] text-muted -mt-2">
+                          ₹{selectedCard.price} per card × {quantity}
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="text-muted">Digital Profile Setup</span>
                         <span className="text-emerald-600 font-semibold">FREE Forever</span>
@@ -1007,8 +1243,27 @@ export default function OrderPage() {
                         </div>
                       )}
 
+                      {selectedCard.id === "corporate" && (
+                        <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-700 dark:text-indigo-300 space-y-1">
+                          <div className="font-bold flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                            Enterprise Bulk Pricing Note
+                          </div>
+                          <p className="leading-relaxed">
+                            Order is calculated at a starting base rate of ₹{selectedCard.price}/unit. Any applicable volume tier discounts and enterprise invoicing will be confirmed upon order review.
+                          </p>
+                        </div>
+                      )}
+
                       <div className="border-t border-border pt-3 flex justify-between text-base font-bold">
-                        <span>Total Payable</span>
+                        <div>
+                          <span>Total Payable</span>
+                          {selectedCard.id === "corporate" && (
+                            <span className="block text-[10px] font-normal text-muted">
+                              (Base rate calculation)
+                            </span>
+                          )}
+                        </div>
                         <span className="text-accent text-xl">₹{finalAmount}</span>
                       </div>
                     </CardContent>

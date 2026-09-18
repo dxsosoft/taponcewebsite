@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
@@ -93,6 +93,7 @@ interface ConfigureClientProps {
 }
 
 export function ConfigureClient({ product }: ConfigureClientProps) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const initialColorParam = searchParams.get("color")
   const defaultColor =
@@ -127,20 +128,66 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
 
   // Step 4: Payment & Discounts
   const [paymentMode, setPaymentMode] = React.useState<"online" | "upi" | "cod">("online")
+  const [quantity, setQuantity] = React.useState(1)
+  const [quantityInput, setQuantityInput] = React.useState("1")
   const [coupon, setCoupon] = React.useState("")
   const [discount, setDiscount] = React.useState(0)
   const [couponApplied, setCouponApplied] = React.useState(false)
   const [couponError, setCouponError] = React.useState<string | null>(null)
 
   // Corporate specific state
-  const [teamSize, setTeamSize] = React.useState("50-199")
+  const [teamSize, setTeamSize] = React.useState("25")
   const [corporateDetails, setCorporateDetails] = React.useState({
     companyName: "",
-    quantity: "50-199",
+    quantity: "25",
     logoFile: null as File | null,
     logoFileName: "",
     brandingNotes: "",
   })
+
+  // Quantity input handlers for standard cards
+  const handleQuantityInputChange = (val: string) => {
+    setQuantityInput(val)
+    const parsed = parseInt(val, 10)
+    if (!isNaN(parsed) && parsed >= 1) {
+      setQuantity(Math.min(10000, parsed))
+    }
+  }
+
+  const handleQuantityInputBlur = () => {
+    const parsed = parseInt(quantityInput, 10)
+    const clamped = isNaN(parsed) || parsed < 1 ? 1 : Math.min(10000, parsed)
+    setQuantity(clamped)
+    setQuantityInput(String(clamped))
+  }
+
+  const handleStepQuantity = (delta: number) => {
+    const next = Math.max(1, Math.min(10000, quantity + delta))
+    setQuantity(next)
+    setQuantityInput(String(next))
+  }
+
+  // Corporate quantity input handlers (enforces 10-card minimum)
+  const corporateQtyNum = parseInt(corporateDetails.quantity, 10) || 0
+
+  const handleCorporateQtyChange = (val: string) => {
+    setCorporateDetails((prev) => ({ ...prev, quantity: val }))
+    setTeamSize(val)
+  }
+
+  const handleCorporateQtyBlur = () => {
+    const parsed = parseInt(corporateDetails.quantity, 10)
+    const clamped = isNaN(parsed) || parsed < 10 ? 10 : Math.min(10000, parsed)
+    setCorporateDetails((prev) => ({ ...prev, quantity: String(clamped) }))
+    setTeamSize(String(clamped))
+  }
+
+  const handleCorporateQtyStep = (delta: number) => {
+    const current = parseInt(corporateDetails.quantity, 10) || 10
+    const next = Math.max(10, Math.min(10000, current + delta))
+    setCorporateDetails((prev) => ({ ...prev, quantity: String(next) }))
+    setTeamSize(String(next))
+  }
 
   // Submission & Completion
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -151,20 +198,34 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
     orderId: string
     amount: number
     isCod: boolean
+    quantity?: number
   } | null>(null)
 
   const activeColorObj =
     product.colors.find((c) => c.id === selectedColor) || product.colors[0]
 
+  const baseSubtotal = product.price * quantity
+
+  React.useEffect(() => {
+    if (couponApplied) {
+      const clean = coupon.trim().toUpperCase()
+      if (clean === "TAPONCE10" || clean === "WELCOME") {
+        setDiscount(Math.round(baseSubtotal * 0.1))
+      } else if (clean === "FREE") {
+        setDiscount(baseSubtotal)
+      }
+    }
+  }, [quantity, product.price, couponApplied, coupon, baseSubtotal])
+
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault()
     const clean = coupon.trim().toUpperCase()
     if (clean === "TAPONCE10" || clean === "WELCOME") {
-      setDiscount(Math.round(product.price * 0.1))
+      setDiscount(Math.round(baseSubtotal * 0.1))
       setCouponApplied(true)
       setCouponError(null)
     } else if (clean === "FREE") {
-      setDiscount(product.price)
+      setDiscount(baseSubtotal)
       setCouponApplied(true)
       setCouponError(null)
     } else {
@@ -172,7 +233,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
     }
   }
 
-  const finalAmount = Math.max(0, product.price - discount)
+  const finalAmount = Math.max(0, baseSubtotal - discount)
 
   // Eagerly preload Razorpay script in background when component mounts
   React.useEffect(() => {
@@ -191,41 +252,42 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
 
       // 1. Corporate inquiry handling (custom volume pricing)
       if (product.isCustomPricing || product.slug === "corporate") {
-        console.log("[handlePlaceOrder] Handling corporate inquiry...")
+        console.log("[handlePlaceOrder] Submitting corporate enterprise inquiry...")
+        const corporateQty = parseInt(corporateDetails.quantity, 10) || 10
         const res = await fetch("/api/orders/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            cardModel: product.slug,
+            cardModel: "corporate",
+            isCorporate: true,
             cardColor: selectedColor,
             cardDetails: {
               ...cardDetails,
               corporateDetails,
             },
             shippingAddress: {
-              fullName: address.recipientName || cardDetails.fullName,
-              phone: address.phone,
-              addressLine1: address.street,
-              city: address.city,
-              state: address.state,
-              pincode: address.pincode,
+              fullName: corporateDetails.companyName || address.recipientName || cardDetails.fullName || "Corporate Lead",
+              phone: address.phone || cardDetails.phone,
+              addressLine1: address.street || "Corporate Address Pending",
+              city: address.city || "Pending",
+              state: address.state || "",
+              pincode: address.pincode || "000000",
+              email: cardDetails.email || "",
             },
-            paymentMethod: "cod",
-            couponCode: null,
+            quantity: corporateQty,
           }),
         })
+
         const data = await res.json().catch(() => ({}))
-        const orderId = (data && data.orderId) || ("TAP-" + Math.floor(100000 + Math.random() * 900000))
-        setOrderConfirmation({
-          orderId,
-          amount: 0,
-          isCod: true,
-        })
-        setIsCompleted(true)
-        setIsSubmitting(false)
-        if (typeof window !== "undefined") {
-          window.scrollTo({ top: 0, behavior: "smooth" })
+
+        if (!res.ok || !data || !data.success) {
+          throw new Error(data?.error || "Failed to submit corporate inquiry. Please try again.")
         }
+
+        const orderId = data.orderId || ("TAP-" + Math.floor(100000 + Math.random() * 900000))
+        setIsSubmitting(false)
+
+        router.push(`/products/corporate/received?id=${encodeURIComponent(orderId)}`)
         return
       }
 
@@ -248,6 +310,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
           },
           paymentMethod: paymentMode === "cod" ? "cod" : "online",
           couponCode: couponApplied ? coupon : null,
+          quantity,
         }),
       })
 
@@ -265,6 +328,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
           orderId: data.orderId,
           amount: finalAmount,
           isCod: true,
+          quantity,
         })
         setIsCompleted(true)
         setIsSubmitting(false)
@@ -296,7 +360,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
         amount: data.amount,
         currency: data.currency || "INR",
         name: "TapOnce",
-        description: `${product.name} NFC Smart Card`,
+        description: `${product.name} NFC Smart Card (${quantity}x)`,
         image: "/Taponce_logo.png",
         order_id: data.razorpayOrderId,
         prefill: {
@@ -360,6 +424,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
               orderId: data.orderId,
               amount: finalAmount,
               isCod: false,
+              quantity,
             })
             setIsCompleted(true)
             if (typeof window !== "undefined") {
@@ -478,6 +543,12 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                     <span className="text-muted">Selected Product:</span>
                     <span className="font-semibold text-accent">
                       {product.name} ({activeColorObj.name})
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-border pb-2">
+                    <span className="text-muted">Quantity:</span>
+                    <span className="font-semibold text-foreground">
+                      {product.isCustomPricing ? `${corporateDetails.quantity} cards` : `${orderConfirmation.quantity || 1} card(s)`}
                     </span>
                   </div>
                   <div className="flex justify-between border-b border-border pb-2">
@@ -674,6 +745,45 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                           })}
                         </div>
 
+                        {!product.isCustomPricing && (
+                          <div className="p-4 rounded-2xl bg-surface border border-border shadow-xs flex items-center justify-between">
+                            <div>
+                              <label className="text-sm font-bold block text-foreground">Quantity:</label>
+                              <span className="text-xs text-muted">Number of cards to order</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-surface-hover/80 border border-border rounded-xl p-1.5 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 transition-all">
+                              <button
+                                type="button"
+                                onClick={() => handleStepQuantity(-1)}
+                                disabled={quantity <= 1}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-base text-foreground hover:bg-surface border border-transparent hover:border-border disabled:opacity-30 transition-all cursor-pointer select-none"
+                                aria-label="Decrease quantity"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                min={1}
+                                max={10000}
+                                value={quantityInput}
+                                onChange={(e) => handleQuantityInputChange(e.target.value)}
+                                onBlur={handleQuantityInputBlur}
+                                className="w-16 sm:w-20 text-center font-bold bg-transparent text-sm focus:outline-none"
+                                aria-label="Card quantity"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleStepQuantity(1)}
+                                disabled={quantity >= 10000}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-base text-foreground hover:bg-surface border border-transparent hover:border-border disabled:opacity-30 transition-all cursor-pointer select-none"
+                                aria-label="Increase quantity"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
                         {product.slug === "corporate" && (
                           <div className="p-5 md:p-6 rounded-2xl bg-surface border border-border shadow-xs space-y-4">
                             <div className="flex items-center justify-between pb-3 border-b border-border">
@@ -721,34 +831,49 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                                   10-Card Minimum
                                 </span>
                               </div>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-1.5">
-                                {["10-49", "50-199", "200-499", "500+"].map((range) => {
-                                  const isSelected = corporateDetails.quantity === range
-                                  return (
-                                    <button
-                                      key={range}
-                                      type="button"
-                                      role="radio"
-                                      aria-checked={isSelected}
-                                      onClick={() => {
-                                        setCorporateDetails((prev) => ({ ...prev, quantity: range }))
-                                        setTeamSize(range)
-                                      }}
-                                      className={`select-none cursor-pointer py-2.5 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
-                                        isSelected
-                                          ? "bg-accent text-white border-accent shadow-xs ring-2 ring-accent/20"
-                                          : "bg-surface-hover/50 border-border text-muted hover:border-accent/40 hover:text-foreground"
-                                      }`}
-                                    >
-                                      <span>{range}</span>
-                                      <span className="text-[10px] opacity-80 font-normal">Cards</span>
-                                    </button>
-                                  )
-                                })}
+                              <div className="flex items-center gap-3 mb-1.5">
+                                <div className="inline-flex items-center gap-2 bg-surface-hover/80 border border-border rounded-xl p-1.5 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 transition-all">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCorporateQtyStep(-1)}
+                                    disabled={corporateQtyNum <= 10}
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-base text-foreground hover:bg-surface border border-transparent hover:border-border disabled:opacity-30 transition-all cursor-pointer select-none"
+                                    aria-label="Decrease quantity"
+                                  >
+                                    -
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min={10}
+                                    max={10000}
+                                    value={corporateDetails.quantity}
+                                    onChange={(e) => handleCorporateQtyChange(e.target.value)}
+                                    onBlur={handleCorporateQtyBlur}
+                                    className="w-16 sm:w-20 text-center font-bold bg-transparent text-sm focus:outline-none"
+                                    aria-label="Estimated Card Quantity"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCorporateQtyStep(1)}
+                                    disabled={corporateQtyNum >= 10000}
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-base text-foreground hover:bg-surface border border-transparent hover:border-border disabled:opacity-30 transition-all cursor-pointer select-none"
+                                    aria-label="Increase quantity"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                                <span className="text-xs text-muted">
+                                  cards for your team
+                                </span>
                               </div>
                               <p className="text-[10px] text-muted">
                                 Volume tier discounts automatically applied for 50+ cards.
                               </p>
+                              {corporateQtyNum < 10 && (
+                                <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                                  <AlertCircle className="h-3 w-3 shrink-0" /> Minimum 10 cards required for corporate orders.
+                                </p>
+                              )}
                             </div>
 
                             {/* 3. Upload Company Logo */}
@@ -1406,9 +1531,18 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                       </CardHeader>
                       <CardContent className="pt-4 space-y-2.5 text-xs">
                         <div className="flex justify-between">
-                          <span className="text-muted">{product.name} Card</span>
-                          <span className="font-semibold text-foreground">{product.priceDisplay}</span>
+                          <span className="text-muted">
+                            {product.name} Card {!product.isCustomPricing ? `(${quantity}x)` : ""}
+                          </span>
+                          <span className="font-semibold text-foreground">
+                            {product.isCustomPricing ? product.priceDisplay : `₹${product.price * quantity}`}
+                          </span>
                         </div>
+                        {!product.isCustomPricing && quantity > 1 && (
+                          <div className="text-[11px] text-muted -mt-1.5">
+                            ₹{product.price} per card × {quantity}
+                          </div>
+                        )}
                         <div className="flex justify-between">
                           <span className="text-muted">Selected Color</span>
                           <span className="font-semibold text-accent">{activeColorObj.name}</span>
@@ -1416,7 +1550,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                         {product.slug === "corporate" && (
                           <div className="flex justify-between">
                             <span className="text-muted">Est. Quantity</span>
-                            <span className="font-semibold text-foreground">{corporateDetails.quantity} cards</span>
+                            <span className="font-semibold text-foreground">{corporateDetails.quantity || 10} cards</span>
                           </div>
                         )}
                         {product.slug === "corporate" && corporateDetails.companyName && (

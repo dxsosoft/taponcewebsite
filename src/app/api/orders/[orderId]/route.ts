@@ -66,6 +66,8 @@ export async function GET(
     })
 
     // Build realistic timeline based on status
+    const isPendingReview = order.status === "pending_review"
+    const isQuoted = order.status === "quoted"
     const isPaid = order.status === "paid"
     const isCod = order.status === "cod_pending"
     const isShipped = order.status === "shipped"
@@ -73,39 +75,95 @@ export async function GET(
     const isFailed = order.status === "payment_failed"
 
     let statusDisplay = "Confirmed"
-    if (isDelivered) statusDisplay = "Delivered"
+    if (isPendingReview) statusDisplay = "Inquiry Under Review"
+    else if (isQuoted) statusDisplay = "Quote Ready & Approved"
+    else if (isDelivered) statusDisplay = "Delivered"
     else if (isShipped) statusDisplay = "Out for Delivery / Dispatched"
     else if (isPaid) statusDisplay = "Payment Confirmed & Processing"
     else if (isCod) statusDisplay = "COD Order Placed & Confirmed"
     else if (isFailed) statusDisplay = "Payment Failed"
     else if (order.status === "cancelled") statusDisplay = "Cancelled"
 
-    const timeline = [
-      {
-        title: "Order Placed & Payment Confirmed",
-        date: formattedDate,
-        done: isPaid || isCod || isShipped || isDelivered,
-        icon: "check",
-      },
-      {
-        title: "Card Printing & NFC Chip Encoding",
-        date: isDelivered || isShipped ? "Completed" : isPaid || isCod ? "In Progress" : "Pending Confirmation",
-        done: isShipped || isDelivered,
-        icon: "cpu",
-      },
-      {
-        title: "Quality Check & Dispatched",
-        date: isDelivered || isShipped ? "Dispatched" : "Scheduled",
-        done: isShipped || isDelivered,
-        icon: "truck",
-      },
-      {
-        title: "Out for Delivery / Delivered",
-        date: isDelivered ? "Delivered" : isShipped ? "Out for Delivery" : `Expected ${formattedEstimatedDelivery}`,
-        done: isDelivered,
-        icon: "package",
-      },
-    ]
+    const timeline = isPendingReview
+      ? [
+          {
+            title: "Inquiry Submitted",
+            date: formattedDate,
+            done: true,
+            icon: "check",
+          },
+          {
+            title: "Requirements & Team Review",
+            date: "In Progress (1-2 business days)",
+            done: false,
+            icon: "search",
+          },
+          {
+            title: "Custom Quote Provided",
+            date: "Pending Approval",
+            done: false,
+            icon: "receipt",
+          },
+          {
+            title: "Payment & Card Production",
+            date: "Upcoming",
+            done: false,
+            icon: "cpu",
+          },
+        ]
+      : isQuoted
+      ? [
+          {
+            title: "Inquiry Submitted",
+            date: formattedDate,
+            done: true,
+            icon: "check",
+          },
+          {
+            title: "Requirements & Team Review",
+            date: "Approved",
+            done: true,
+            icon: "check",
+          },
+          {
+            title: "Custom Quote Approved",
+            date: "Ready for Payment",
+            done: true,
+            icon: "receipt",
+          },
+          {
+            title: "Payment & Card Production",
+            date: "Awaiting Customer Payment",
+            done: false,
+            icon: "cpu",
+          },
+        ]
+      : [
+          {
+            title: "Order Placed & Payment Confirmed",
+            date: formattedDate,
+            done: isPaid || isCod || isShipped || isDelivered,
+            icon: "check",
+          },
+          {
+            title: "Card Printing & NFC Chip Encoding",
+            date: isDelivered || isShipped ? "Completed" : isPaid || isCod ? "In Progress" : "Pending Confirmation",
+            done: isShipped || isDelivered,
+            icon: "cpu",
+          },
+          {
+            title: "Quality Check & Dispatched",
+            date: isDelivered || isShipped ? "Dispatched" : "Scheduled",
+            done: isShipped || isDelivered,
+            icon: "truck",
+          },
+          {
+            title: "Out for Delivery / Delivered",
+            date: isDelivered ? "Delivered" : isShipped ? "Out for Delivery" : `Expected ${formattedEstimatedDelivery}`,
+            done: isDelivered,
+            icon: "package",
+          },
+        ]
 
     const fullAddress = [
       parsedShippingAddress.addressLine1,
@@ -117,12 +175,24 @@ export async function GET(
       .filter(Boolean)
       .join(", ")
 
+    const corporateDetails = parsedCardDetails.corporateDetails || null
+    const companyName = corporateDetails?.companyName || parsedShippingAddress.fullName || parsedCardDetails.companyName || ""
+    const brandingNotes = corporateDetails?.brandingNotes || parsedCardDetails.brandingNotes || ""
+    const logo = corporateDetails?.logo || parsedCardDetails.logo || null
+
     return NextResponse.json({
       success: true,
       order: {
         id: order.orderId,
         cardName,
+        cardModel: order.cardModel,
+        cardColor: order.cardColor,
+        quantity: order.quantity || 1,
         recipientName: parsedShippingAddress.fullName || parsedCardDetails.fullName || "Customer",
+        companyName,
+        brandingNotes,
+        logo,
+        corporateDetails,
         status: statusDisplay,
         statusCode: order.status,
         paymentMethod: order.paymentMethod,

@@ -13,15 +13,69 @@ export async function POST(req: NextRequest) {
       shippingAddress,
       paymentMethod,
       couponCode,
+      quantity: rawQuantity,
     } = body
 
+    const isCorporate = cardModel === "corporate" || body.isCorporate === true
+    const quantity = isCorporate
+      ? Math.max(10, Math.min(10000, Math.floor(Number(rawQuantity) || 10)))
+      : Math.max(1, Math.min(500, Math.floor(Number(rawQuantity) || 1)))
+
     // 1. Basic validation
-    const isCorporate = cardModel === "corporate"
-    if (!cardModel || (!CARD_VARIANTS.some((v) => v.id === cardModel) && !isCorporate)) {
+    if (!cardModel || !CARD_VARIANTS.some((v) => v.id === cardModel)) {
       return NextResponse.json(
         { success: false, error: "Invalid or missing card model selected." },
         { status: 400 }
       )
+    }
+
+    // 2. Handle Corporate / Enterprise Inquiry (Pending Review)
+    if (isCorporate) {
+      const contactPhone = shippingAddress?.phone || cardDetails?.phone || cardDetails?.corporateDetails?.phone
+      const contactName = shippingAddress?.fullName || cardDetails?.fullName || cardDetails?.corporateDetails?.companyName || "Corporate Lead"
+      
+      if (!contactPhone || String(contactPhone).trim().length < 5) {
+        return NextResponse.json(
+          { success: false, error: "Please provide a valid phone number for your corporate inquiry." },
+          { status: 400 }
+        )
+      }
+
+      const randomSuffix = Math.floor(100000 + Math.random() * 900000)
+      const publicOrderId = `TAP-${randomSuffix}`
+
+      const order = createOrder({
+        orderId: publicOrderId,
+        razorpayOrderId: null,
+        status: "pending_review",
+        amount: 0,
+        currency: "INR",
+        cardModel: "corporate",
+        cardColor: cardColor || "custom",
+        cardDetails: cardDetails || {},
+        shippingAddress: {
+          fullName: contactName,
+          phone: contactPhone,
+          addressLine1: shippingAddress?.addressLine1 || shippingAddress?.street || "Company Address Pending",
+          city: shippingAddress?.city || "Pending",
+          state: shippingAddress?.state || "",
+          pincode: shippingAddress?.pincode || "000000",
+          email: shippingAddress?.email || cardDetails?.email || cardDetails?.corporateDetails?.email || "",
+        },
+        paymentMethod: "online",
+        couponCode: null,
+        discount: 0,
+        quantity,
+      })
+
+      return NextResponse.json({
+        success: true,
+        isCorporate: true,
+        orderId: order.orderId,
+        status: order.status,
+        quantity: order.quantity,
+        message: "Corporate bulk inquiry submitted successfully and is pending team review.",
+      })
     }
 
     if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.addressLine1 || !shippingAddress.city || !shippingAddress.pincode) {
@@ -31,35 +85,17 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (paymentMethod !== "online" && paymentMethod !== "cod") {
+    if (paymentMethod !== "online" && paymentMethod !== "upi" && paymentMethod !== "cod") {
       return NextResponse.json(
-        { success: false, error: "Invalid payment method specified. Must be 'online' or 'cod'." },
+        { success: false, error: "Invalid payment method specified. Must be 'online', 'upi', or 'cod'." },
         { status: 400 }
       )
     }
 
-    // 2. Compute canonical price strictly on the server
-    const pricing = isCorporate
-      ? {
-          card: {
-            id: "corporate",
-            name: "Corporate Custom",
-            price: 0,
-            material: "Enterprise",
-            description: "Corporate inquiry",
-            image: "/Taponce_logo_dark.png",
-            colors: [],
-          },
-          basePrice: 0,
-          discount: 0,
-          finalPrice: 0,
-          amountInPaise: 0,
-          couponApplied: false,
-          couponCode: null,
-        }
-      : calculateOrderPricing(cardModel, couponCode)
+    // 3. Compute canonical price strictly on the server (unit price * quantity - discount)
+    const pricing = calculateOrderPricing(cardModel, couponCode, quantity)
 
-    // 3. Generate unique public order ID (e.g. TAP-782914)
+    // 4. Generate unique public order ID (e.g. TAP-782914)
     const randomSuffix = Math.floor(100000 + Math.random() * 900000)
     const publicOrderId = `TAP-${randomSuffix}`
 
@@ -78,6 +114,7 @@ export async function POST(req: NextRequest) {
         paymentMethod: "cod",
         couponCode: pricing.couponCode,
         discount: pricing.discount,
+        quantity,
       })
 
       return NextResponse.json({
@@ -87,6 +124,7 @@ export async function POST(req: NextRequest) {
         amount: pricing.finalPrice,
         currency: "INR",
         status: order.status,
+        quantity,
         message: "Order placed successfully with Cash on Delivery",
       })
     }
@@ -116,6 +154,7 @@ export async function POST(req: NextRequest) {
         customerPhone: shippingAddress.phone,
         customerEmail: shippingAddress.email || "",
         cardModel,
+        quantity: String(quantity),
       },
     })
 
@@ -133,6 +172,7 @@ export async function POST(req: NextRequest) {
       paymentMethod: "online",
       couponCode: pricing.couponCode,
       discount: pricing.discount,
+      quantity,
     })
 
     return NextResponse.json({

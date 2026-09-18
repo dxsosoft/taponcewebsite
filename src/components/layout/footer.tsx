@@ -77,21 +77,27 @@ export function Footer() {
       <div className="container mx-auto px-4 md:px-6 py-12 max-w-7xl">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-2">
-            <Link href="/" className="flex items-center mb-4">
+            <Link
+              href="/"
+              className="flex items-center h-10 w-auto max-w-[160px] max-h-10 shrink-0 overflow-hidden mb-4"
+              style={{ height: "40px", maxHeight: "40px", width: "auto", maxWidth: "160px" }}
+            >
               <Image
                 src="/Taponce_logo.png"
                 alt="TapOnce"
-                width={837}
-                height={216}
-                className={`h-10 w-auto object-contain ${mounted ? (isDark ? "hidden" : "block") : "dark:hidden"}`}
+                width={155}
+                height={40}
+                className={`h-9 sm:h-10 w-auto max-w-[155px] max-h-10 object-contain shrink-0 ${mounted ? (isDark ? "hidden" : "block") : "dark:hidden"}`}
+                style={{ height: "40px", maxHeight: "40px", width: "auto", maxWidth: "155px" }}
                 unoptimized
               />
               <Image
                 src="/Taponce_logo_dark.png"
                 alt="TapOnce"
-                width={837}
-                height={216}
-                className={`h-10 w-auto object-contain ${mounted ? (isDark ? "block" : "hidden") : "hidden dark:block"}`}
+                width={155}
+                height={40}
+                className={`h-9 sm:h-10 w-auto max-w-[155px] max-h-10 object-contain shrink-0 ${mounted ? (isDark ? "block" : "hidden") : "hidden dark:block"}`}
+                style={{ height: "40px", maxHeight: "40px", width: "auto", maxWidth: "155px" }}
                 unoptimized
               />
             </Link>
