@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { OrderCartProvider } from "@/lib/order-cart";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <OrderCartProvider>
+            {children}
+          </OrderCartProvider>
         </ThemeProvider>
       </body>
     </html>

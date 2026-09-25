@@ -38,6 +38,7 @@ export default function ProductsPage() {
                     size="md" 
                     fullName="Aryan Sharma" 
                     designation="Product Designer" 
+                    company="Meridian & Co."
                     interactive={false} 
                   />
                 </div>
@@ -83,6 +84,7 @@ export default function ProductsPage() {
                     size="md" 
                     fullName="Alexander Chen" 
                     designation="Director of Innovation" 
+                    company="Meridian & Co."
                     interactive={false} 
                   />
                 </div>
@@ -128,6 +130,7 @@ export default function ProductsPage() {
                     size="md" 
                     fullName="Marcus Vance" 
                     designation="Managing Partner" 
+                    company="Meridian & Co."
                     interactive={false} 
                   />
                 </div>
@@ -173,6 +176,7 @@ export default function ProductsPage() {
                     size="md" 
                     fullName="John Smith" 
                     designation="VP of Engineering" 
+                    company="Meridian & Co."
                     interactive={false} 
                   />
                 </div>
@@ -201,7 +205,7 @@ export default function ProductsPage() {
                   className="w-full h-12 text-sm font-bold border-2 border-indigo-600 dark:border-accent text-indigo-700 dark:text-accent hover:bg-indigo-600 hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_18px_rgba(99,102,241,0.35)] rounded-xl" 
                   asChild
                 >
-                  <Link href="/products/corporate">View Details</Link>
+                  <Link href="/products/corporate/configure">Get a Quote</Link>
                 </Button>
               </CardFooter>
             </Card>

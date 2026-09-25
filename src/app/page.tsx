@@ -11,7 +11,7 @@ import { HeroTagline } from "@/components/marketing/hero-tagline";
 import { HomepageHeroButtons } from "@/components/homepage-hero-buttons";
 import { ProfileAvatar } from "@/components/ui/profile-avatar";
 import { SmartCardVisual } from "@/components/ui/smart-card-visual";
-import { TIER_BACKGROUNDS } from "@/lib/products";
+import { TIER_BACKGROUNDS, getProductBySlug } from "@/lib/products";
 
 export default function Home() {
   return (
@@ -19,7 +19,7 @@ export default function Home() {
       <Navbar />
       <main className="flex-1">
         {/* 1. Hero */}
-        <Section className="pt-24 pb-16 md:pt-32 md:pb-24 overflow-hidden relative" id="hero">
+        <Section className="pt-10 pb-16 md:pt-14 md:pb-24 overflow-hidden relative" id="hero">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-3xl -z-10"></div>
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="flex flex-col gap-6 text-center md:text-left z-10">
@@ -76,10 +76,10 @@ export default function Home() {
                   {/* Mockup Profile Content */}
                   <div className="h-40 bg-gradient-to-br from-[#00695C]/20 to-[#051f44]/20"></div>
                   <div className="px-6 pb-6 -mt-16">
-                    <ProfileAvatar name="Sathiya Seelan" size="lg" className="mx-auto mb-4" />
+                    <ProfileAvatar name="Aryan Mehta" size="lg" className="mx-auto mb-4" />
                     <div className="text-center mb-6">
-                      <h3 className="text-2xl font-bold text-foreground">Sathiya Seelan</h3>
-                      <p className="text-muted font-medium">CEO / Founder</p>
+                      <h3 className="text-2xl font-bold text-foreground">Aryan Mehta</h3>
+                      <p className="text-muted font-medium">Product Designer</p>
                     </div>
                     <div className="flex flex-col gap-3">
                       <Button className="w-full rounded-full bg-accent hover:bg-accent-hover text-white">Save Contact</Button>
@@ -209,6 +209,7 @@ export default function Home() {
                     size="md" 
                     fullName="Aryan Sharma" 
                     designation="Product Designer" 
+                    company="Meridian & Co."
                     interactive={false} 
                   />
                 </div>
@@ -233,6 +234,7 @@ export default function Home() {
                     size="md" 
                     fullName="Alexander Chen" 
                     designation="Director of Innovation" 
+                    company="Meridian & Co."
                     interactive={false} 
                   />
                 </div>
@@ -256,6 +258,7 @@ export default function Home() {
                     size="md" 
                     fullName="Marcus Vance" 
                     designation="Managing Partner" 
+                    company="Meridian & Co."
                     interactive={false} 
                   />
                 </div>
@@ -279,6 +282,7 @@ export default function Home() {
                     size="md" 
                     fullName="John Smith" 
                     designation="VP of Engineering" 
+                    company="Meridian & Co."
                     interactive={false} 
                   />
                 </div>
@@ -288,7 +292,7 @@ export default function Home() {
                 <CardDescription className="text-muted">Fully branded corporate cards for teams.</CardDescription>
               </CardHeader>
               <CardFooter className="mt-auto">
-                <Button variant="outline" className="w-full border-2 border-indigo-600 dark:border-accent text-indigo-700 dark:text-accent hover:bg-indigo-600 hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_18px_rgba(99,102,241,0.35)] font-bold" asChild><Link href="/products/corporate">Details</Link></Button>
+                <Button variant="outline" className="w-full border-2 border-indigo-600 dark:border-accent text-indigo-700 dark:text-accent hover:bg-indigo-600 hover:text-white dark:hover:bg-accent dark:hover:text-white transition-all duration-200 active:scale-[0.98] hover:shadow-[0_0_18px_rgba(99,102,241,0.35)] font-bold" asChild><Link href="/products/corporate/configure">Get a Quote</Link></Button>
               </CardFooter>
             </Card>
           </div>
@@ -451,7 +455,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-slate-900">Essential</CardTitle>
                 <CardDescription className="text-slate-900">Perfect for individuals</CardDescription>
-                <div className="mt-4 text-4xl font-bold text-slate-900">₹XXX</div>
+                <div className="mt-4 text-4xl font-bold text-slate-900">{getProductBySlug("essential")?.priceDisplay || "₹499"}</div>
                 <div className="text-sm text-slate-900">One-time payment</div>
               </CardHeader>
               <CardContent className="flex-1">
@@ -476,7 +480,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle>Premium</CardTitle>
                 <CardDescription>For professionals</CardDescription>
-                <div className="mt-4 text-4xl font-bold">₹XXX</div>
+                <div className="mt-4 text-4xl font-bold">{getProductBySlug("premium")?.priceDisplay || "₹999"}</div>
                 <div className="text-sm text-muted">One-time payment</div>
               </CardHeader>
               <CardContent className="flex-1">
@@ -500,7 +504,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-white">Metal</CardTitle>
                 <CardDescription className="text-zinc-400">For executives</CardDescription>
-                <div className="mt-4 text-4xl font-bold text-white">₹XXX</div>
+                <div className="mt-4 text-4xl font-bold text-white">{getProductBySlug("metal")?.priceDisplay || "₹3,499"}</div>
                 <div className="text-sm text-zinc-400">One-time payment</div>
               </CardHeader>
               <CardContent className="flex-1">
@@ -526,7 +530,7 @@ export default function Home() {
                <p className="text-muted">Custom pricing based on employee count, platform features, branding, and analytics.</p>
              </div>
              <Button size="lg" asChild>
-               <Link href="/contact">Get Corporate Pricing</Link>
+               <Link href="/products/corporate/configure">Get a Quote</Link>
              </Button>
           </div>
         </Section>

@@ -9,7 +9,7 @@ export function HomepageHeroButtons() {
   return (
     <div className="flex flex-col sm:flex-row gap-4 mt-4 justify-center md:justify-start">
       <Link 
-        href="/order"
+        href="/products"
         className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg font-semibold h-12 px-8 text-base border transition-all duration-300 shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
           businessHovered
             ? "bg-white text-slate-900 border-slate-300"

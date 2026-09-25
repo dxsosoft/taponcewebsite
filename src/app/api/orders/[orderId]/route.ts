@@ -30,6 +30,7 @@ export async function GET(
 
     let parsedCardDetails: any = {}
     let parsedShippingAddress: any = {}
+    let parsedItems: any[] = []
 
     try {
       parsedCardDetails = JSON.parse(order.cardDetails)
@@ -43,10 +44,29 @@ export async function GET(
       parsedShippingAddress = {}
     }
 
+    if (order.items) {
+      try {
+        parsedItems = JSON.parse(order.items)
+      } catch {
+        parsedItems = []
+      }
+    } else if (parsedCardDetails.items && Array.isArray(parsedCardDetails.items)) {
+      parsedItems = parsedCardDetails.items
+    }
+
     const cardVariant = CARD_VARIANTS.find((v) => v.id === order.cardModel)
     const colorObj = cardVariant?.colors.find((c) => c.id === order.cardColor)
-    const colorName = colorObj?.name || (order.cardColor === "teal" ? "Signature Teal" : order.cardColor ? order.cardColor.charAt(0).toUpperCase() + order.cardColor.slice(1) : "Standard")
-    const cardName = `${cardVariant?.name || "TapOnce NFC Card"} • ${colorName}`
+    const colorName = order.cardColor?.startsWith("#")
+      ? `Custom Hex (${order.cardColor.toUpperCase()})`
+      : (colorObj?.name || (order.cardColor === "teal" ? "Signature Teal" : order.cardColor ? order.cardColor.charAt(0).toUpperCase() + order.cardColor.slice(1) : "Standard"))
+    
+    let cardName = `${cardVariant?.name || "TapOnce NFC Card"} • ${colorName}`
+    if (parsedItems.length > 1) {
+      const summaryList = parsedItems.map((i) => `${i.quantity}x ${i.colorName || i.color || ""}`).join(", ")
+      cardName = `${order.quantity || 1} Cards (${summaryList})`
+    } else if (parsedItems.length === 1 && parsedItems[0].cardName) {
+      cardName = parsedItems[0].cardName
+    }
 
     const orderCreatedDate = new Date(order.createdAt)
     const formattedDate = orderCreatedDate.toLocaleDateString("en-IN", {
@@ -178,7 +198,7 @@ export async function GET(
     const corporateDetails = parsedCardDetails.corporateDetails || null
     const companyName = corporateDetails?.companyName || parsedShippingAddress.fullName || parsedCardDetails.companyName || ""
     const brandingNotes = corporateDetails?.brandingNotes || parsedCardDetails.brandingNotes || ""
-    const logo = corporateDetails?.logo || parsedCardDetails.logo || null
+    const logo = corporateDetails?.logo || parsedCardDetails.logo || parsedCardDetails.logoUrl || null
 
     return NextResponse.json({
       success: true,
@@ -193,6 +213,8 @@ export async function GET(
         brandingNotes,
         logo,
         corporateDetails,
+        cardDetails: parsedCardDetails,
+        items: parsedItems,
         status: statusDisplay,
         statusCode: order.status,
         paymentMethod: order.paymentMethod,

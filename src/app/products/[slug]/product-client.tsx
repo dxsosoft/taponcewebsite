@@ -2,12 +2,15 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useTheme } from "next-themes"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
 import { Button } from "@/components/ui/button"
 import type { Product } from "@/lib/products"
+import { getPreviewBackgroundForColor } from "@/lib/products"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
+import { Card360Viewer } from "@/components/card-360-viewer"
 import {
   CheckCircle2,
   Sparkles,
@@ -27,9 +30,21 @@ interface ProductClientProps {
 export function ProductDetailClient({ product }: ProductClientProps) {
   // Color selection state for live visual preview
   const [selectedColor, setSelectedColor] = React.useState(product.colors[0].id)
+  const { theme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isDark = mounted ? (resolvedTheme === "dark" || theme === "dark") : false
 
   const activeColorObj =
     product.colors.find((c) => c.id === selectedColor) || product.colors[0]
+
+  const previewBg = React.useMemo(() => {
+    return activeColorObj.previewBg || getPreviewBackgroundForColor(selectedColor)
+  }, [activeColorObj, selectedColor])
 
   return (
     <>
@@ -57,9 +72,20 @@ export function ProductDetailClient({ product }: ProductClientProps) {
               
               {/* Left Column: Product Imagery & Color Swatch */}
               <div className="lg:col-span-6 space-y-6">
-                <div className="relative rounded-3xl overflow-hidden border border-border shadow-2xl bg-gradient-to-br from-surface via-surface-hover to-surface p-6 sm:p-8 md:p-10 pb-20 sm:pb-24 flex flex-col items-center justify-center min-h-[400px] sm:min-h-[440px] group">
+                <div
+                  className="relative rounded-3xl overflow-hidden border shadow-2xl p-6 sm:p-8 md:p-10 pb-20 sm:pb-24 flex flex-col items-center justify-center min-h-[400px] sm:min-h-[440px] group transition-all duration-500 ease-out"
+                  style={{
+                    background: isDark ? previewBg.darkBg : previewBg.lightBg,
+                    borderColor: isDark ? previewBg.borderColor?.dark : previewBg.borderColor?.light,
+                  }}
+                >
                   {/* Studio ambient glow backdrop */}
-                  <div className="absolute inset-0 bg-radial from-accent/10 via-transparent to-transparent pointer-events-none" />
+                  <div
+                    className="absolute inset-0 pointer-events-none transition-all duration-500 ease-out"
+                    style={{
+                      background: `radial-gradient(circle 380px at 50% 45%, ${previewBg.glowColor} 0%, transparent 75%)`,
+                    }}
+                  />
                   
                   {product.badge && (
                     <div className="absolute top-4 left-4 bg-accent text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 z-20">
@@ -67,25 +93,31 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                     </div>
                   )}
 
-                  <div className="w-full max-w-[420px] relative z-10 drop-shadow-2xl transition-all duration-500 group-hover:scale-[1.02] mb-12 sm:mb-14">
-                    <SmartCardVisual
-                      key={selectedColor}
+                  <div className="w-full max-w-[420px] relative z-10 drop-shadow-2xl mb-12 sm:mb-14">
+                    <Card360Viewer
                       slug={product.slug}
                       colorId={selectedColor}
                       fullName="Aryan Sharma"
                       designation="Product Designer"
-                      company="TapOnce Technologies"
+                      company="Meridian & Co."
                       size="lg"
-                      interactive={true}
                     />
                   </div>
 
-                  <div className="absolute bottom-4 left-4 right-4 bg-surface/90 backdrop-blur-md border border-border p-3 rounded-2xl flex items-center justify-between shadow-lg z-20">
+                  <div className="absolute bottom-4 left-4 right-4 bg-surface/90 dark:bg-surface/80 backdrop-blur-md border border-border p-3 rounded-2xl flex items-center justify-between shadow-lg z-20 transition-colors duration-300">
                     <div className="flex items-center gap-2.5 text-xs font-semibold text-foreground">
                       <span
-                        className="w-4 h-4 rounded-full border border-gray-400 shrink-0 shadow-xs"
-                        style={{ backgroundColor: activeColorObj.bg }}
-                      />
+                        className={`rounded-full shrink-0 shadow-xs relative overflow-hidden ${
+                          product.slug === "metal"
+                            ? "w-4.5 h-4.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),0_1px_2px_rgba(0,0,0,0.3)] border border-black/30 ring-1 ring-white/30"
+                            : "w-4 h-4 border border-gray-400"
+                        }`}
+                        style={{ background: activeColorObj.bg }}
+                      >
+                        {product.slug === "metal" && (
+                          <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/40 to-transparent pointer-events-none" />
+                        )}
+                      </span>
                       <span>Finish: {activeColorObj.name}</span>
                     </div>
                     <span className="text-[11px] font-mono text-muted uppercase tracking-wider">
@@ -102,6 +134,7 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                   <div className="flex flex-wrap gap-3">
                     {product.colors.map((c) => {
                       const isSelected = selectedColor === c.id
+                      const isMetal = product.slug === "metal"
                       return (
                         <button
                           key={c.id}
@@ -116,9 +149,17 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                           }`}
                         >
                           <span
-                            className="w-4 h-4 rounded-full border border-black/20 shrink-0"
-                            style={{ backgroundColor: c.bg }}
-                          />
+                            className={`rounded-full shrink-0 relative overflow-hidden transition-transform ${
+                              isMetal
+                                ? "w-5 h-5 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.75),0_1.5px_3px_rgba(0,0,0,0.35)] border border-black/30 ring-1 ring-white/30"
+                                : "w-4 h-4 border border-black/20"
+                            }`}
+                            style={{ background: c.bg }}
+                          >
+                            {isMetal && (
+                              <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/40 to-transparent pointer-events-none" />
+                            )}
+                          </span>
                           <span>{c.name}</span>
                           {/* Radio-style circle indicator */}
                           <span
@@ -231,7 +272,10 @@ export function ProductDetailClient({ product }: ProductClientProps) {
                   className="w-full h-14 text-base font-bold bg-accent hover:bg-accent-hover text-white shadow-lg shadow-accent/20 rounded-2xl cursor-pointer"
                 >
                   <Link href={`/products/${product.slug}/configure?color=${selectedColor}`}>
-                    Configure &amp; Order Your {product.name} <ArrowRight className="h-5 w-5 ml-2" />
+                    {product.slug === "corporate"
+                      ? "Configure Team Cards & Get a Quote"
+                      : `Configure & Order Your ${product.name}`}{" "}
+                    <ArrowRight className="h-5 w-5 ml-2" />
                   </Link>
                 </Button>
               </div>

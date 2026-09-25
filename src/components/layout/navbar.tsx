@@ -6,8 +6,8 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Menu, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
+import { NavbarActionButtons } from "@/components/navbar-action-buttons"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false)
@@ -76,12 +76,7 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
-          <Button variant="outline" asChild>
-            <Link href="/order-status">Order Status</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/order">Get Your Card</Link>
-          </Button>
+          <NavbarActionButtons />
         </div>
 
         {/* Mobile menu and toggle buttons */}
@@ -111,13 +106,8 @@ export function Navbar() {
             <ThemeToggle />
           </div>
 
-          <div className="mt-1 flex flex-col gap-2">
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/order-status" onClick={() => setIsOpen(false)}>Order Status</Link>
-            </Button>
-            <Button className="w-full" asChild>
-              <Link href="/order" onClick={() => setIsOpen(false)}>Get Your Card</Link>
-            </Button>
+          <div className="mt-1">
+            <NavbarActionButtons onNavigate={() => setIsOpen(false)} isMobile />
           </div>
         </div>
       )}

@@ -62,9 +62,9 @@ body {
 .theme-toggle-btn::before {
   content: "";
   position: absolute;
-  inset: -2px;
+  inset: -2.5px;
   border-radius: 9999px;
-  background: linear-gradient(135deg, #fbbf24, #f97316);
+  background: linear-gradient(135deg, #00897b, #00695c, #26a69a);
   opacity: 0;
   transition: opacity 250ms ease, filter 250ms ease;
   z-index: 0;
@@ -72,11 +72,11 @@ body {
 
 .theme-toggle-btn:hover::before {
   opacity: 1;
-  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.45));
+  filter: drop-shadow(0 0 7px rgba(0, 137, 123, 0.7));
 }
 
 .theme-toggle-btn:hover {
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.3);
+  box-shadow: 0 0 0 1px rgba(0, 105, 92, 0.4), 0 0 16px rgba(0, 137, 123, 0.45);
 }
 
 .dark .theme-toggle-btn::before {
@@ -134,4 +134,39 @@ input[type="file"] {
   -webkit-user-select: none !important;
   cursor: pointer !important;
 }
+
+/* Custom Brand Color Picker (react-colorful) Styling */
+.corporate-color-picker.react-colorful {
+  width: 100% !important;
+  max-width: 260px;
+  height: 200px !important;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--color-border);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.corporate-color-picker .react-colorful__saturation {
+  border-radius: 14px 14px 0 0;
+  border-bottom: 8px solid transparent;
+}
+
+.corporate-color-picker .react-colorful__hue {
+  height: 24px;
+  border-radius: 0 0 14px 14px;
+}
+
+.corporate-color-picker .react-colorful__pointer {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.15);
+  cursor: grab;
+}
+
+.corporate-color-picker .react-colorful__pointer:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
 

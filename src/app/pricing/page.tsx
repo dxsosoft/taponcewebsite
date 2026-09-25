@@ -1,6 +1,8 @@
+import Link from "next/link"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Section } from "@/components/ui/section"
+import { Button } from "@/components/ui/button"
 import { SmartCardVisual } from "@/components/ui/smart-card-visual"
 import { PRODUCTS, TIER_BACKGROUNDS } from "@/lib/products"
 import { PricingHeroButtons } from "@/components/pricing-hero-buttons"
@@ -87,6 +89,26 @@ export default function Page() {
                       }`}>
                       {product.tagline}
                     </p>
+
+                    <div className="mt-4 pt-3">
+                      <Button
+                        size="sm"
+                        className={`w-full rounded-xl font-bold text-xs h-9 transition-all ${
+                          product.slug === "corporate"
+                            ? "bg-accent hover:bg-accent-hover text-white shadow-xs"
+                            : isMetal
+                            ? "bg-gradient-to-r from-zinc-200 via-white to-zinc-200 hover:from-white hover:to-zinc-100 text-zinc-950 font-bold"
+                            : isEssential
+                            ? "bg-slate-800 hover:bg-slate-700 text-white"
+                            : "bg-accent hover:bg-accent-hover text-white"
+                        }`}
+                        asChild
+                      >
+                        <Link href={product.slug === "corporate" ? "/products/corporate/configure" : `/products/${product.slug}/configure`}>
+                          {product.slug === "corporate" ? "Get a Quote" : "Configure & Order"}
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 )
               })}
@@ -94,10 +116,26 @@ export default function Page() {
           </div>
         </Section>
 
-        <Section className="py-24">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-6">More coming soon.</h2>
-            <p className="text-muted text-lg">We are actively building out this page.</p>
+        {/* Corporate Teams Callout */}
+        <Section className="py-16 md:py-20 bg-surface-hover/50">
+          <div className="max-w-5xl mx-auto rounded-3xl p-8 md:p-12 border border-border bg-surface flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm">
+            <div className="space-y-3 max-w-xl text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-accent/10 text-accent">
+                Enterprise &amp; Teams
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Need Custom Corporate Cards?</h2>
+              <p className="text-sm text-muted leading-relaxed">
+                Empower your entire company with custom-branded NFC cards. Includes multi-member roster provisioning, custom logo placement, dedicated account manager, and volume pricing starting from 10 cards.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3.5 shrink-0">
+              <Button size="lg" className="h-12 px-7 font-bold bg-accent hover:bg-accent-hover text-white rounded-xl shadow-sm" asChild>
+                <Link href="/products/corporate/configure">Get a Quote</Link>
+              </Button>
+              <Button size="lg" variant="outline" className="h-12 px-6 font-semibold rounded-xl" asChild>
+                <Link href="/contact">Contact Sales</Link>
+              </Button>
+            </div>
           </div>
         </Section>
       </main>

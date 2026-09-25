@@ -154,6 +154,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted">
               <li><Link href="/products/nfc-cards" className="hover:text-foreground transition-colors">NFC Cards</Link></li>
               <li><Link href="/products/digital-profile" className="hover:text-foreground transition-colors">Digital Profile</Link></li>
+              <li><Link href="/products/corporate/configure" className="hover:text-foreground transition-colors">Corporate Cards</Link></li>
               <li><Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link></li>
             </ul>
           </div>

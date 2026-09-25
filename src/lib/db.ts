@@ -19,6 +19,7 @@ export interface OrderRecord {
   couponCode: string | null
   discount: number
   quantity?: number
+  items?: string // JSON stringified array of line items
   createdAt: string
   updatedAt: string
 }
@@ -61,6 +62,7 @@ function getDb(): DatabaseSync {
       couponCode TEXT,
       discount INTEGER DEFAULT 0,
       quantity INTEGER DEFAULT 1,
+      items TEXT,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
     );
@@ -71,6 +73,13 @@ function getDb(): DatabaseSync {
   // Migrate existing table to add quantity column if missing
   try {
     db.exec("ALTER TABLE orders ADD COLUMN quantity INTEGER DEFAULT 1;")
+  } catch {
+    // Column already exists
+  }
+
+  // Migrate existing table to add items column if missing
+  try {
+    db.exec("ALTER TABLE orders ADD COLUMN items TEXT;")
   } catch {
     // Column already exists
   }
@@ -93,11 +102,13 @@ export function createOrder(data: {
   couponCode?: string | null
   discount?: number
   quantity?: number
+  items?: string | object[]
 }): OrderRecord {
   const db = getDb()
   const now = new Date().toISOString()
   const cardDetailsJson = typeof data.cardDetails === "string" ? data.cardDetails : JSON.stringify(data.cardDetails)
   const shippingAddressJson = typeof data.shippingAddress === "string" ? data.shippingAddress : JSON.stringify(data.shippingAddress)
+  const itemsJson = data.items ? (typeof data.items === "string" ? data.items : JSON.stringify(data.items)) : null
   const quantity = Math.max(1, Math.min(10000, Math.floor(Number(data.quantity) || 1)))
 
   const stmt = db.prepare(`
@@ -117,10 +128,11 @@ export function createOrder(data: {
       couponCode,
       discount,
       quantity,
+      items,
       createdAt,
       updatedAt
     ) VALUES (
-      ?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     )
   `)
 
@@ -138,6 +150,7 @@ export function createOrder(data: {
     data.couponCode || null,
     data.discount || 0,
     quantity,
+    itemsJson,
     now,
     now
   )

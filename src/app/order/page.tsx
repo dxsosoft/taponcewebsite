@@ -25,8 +25,10 @@ import {
   Smartphone,
 } from "lucide-react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import Script from "next/script"
-import { SmartCardVisual } from "@/components/ui/smart-card-visual"
+import { LiveCardPreview } from "@/components/live-card-preview"
+import { CompanyLogoUpload } from "@/components/company-logo-upload"
 import { CardBadge } from "@/components/ui/card-badge"
 import { CARD_VARIANTS } from "@/lib/pricing"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
@@ -96,31 +98,105 @@ function CardTierBadge({ tierId, isSelected = false }: { tierId: string; isSelec
   )
 }
 
-export default function OrderPage() {
+function OrderPageContent() {
+  const searchParams = useSearchParams()
+  const cardParam = searchParams.get("card")
+  const colorParam = searchParams.get("color")
+
+  const initialCard =
+    (cardParam &&
+      CARD_VARIANTS.find(
+        (c) => c.id.toLowerCase() === cardParam.toLowerCase()
+      )) ||
+    CARD_VARIANTS[1] // default premium
+
+  const initialColor =
+    (colorParam &&
+      initialCard.colors.find(
+        (c) => c.id.toLowerCase() === colorParam.toLowerCase()
+      )?.id) ||
+    initialCard.colors[0].id
+
   const [step, setStep] = React.useState(1)
 
   // Step 1: Card choice
-  const [selectedCardId, setSelectedCardId] = React.useState("premium")
-  const [selectedColor, setSelectedColor] = React.useState("black")
+  const [selectedCardId, setSelectedCardId] = React.useState(initialCard.id)
+  const [selectedColor, setSelectedColor] = React.useState(initialColor)
 
-  // Step 2: Card details
+  const syncUrlParams = React.useCallback((cardId: string, colorId: string) => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      url.searchParams.set("card", cardId)
+      url.searchParams.set("color", colorId)
+      window.history.replaceState(null, "", url.toString())
+    }
+  }, [])
+
+  const handleSelectCard = React.useCallback(
+    (cardId: string) => {
+      setSelectedCardId(cardId)
+      const targetCard = CARD_VARIANTS.find((c) => c.id === cardId)
+      const defaultCol = targetCard ? targetCard.colors[0].id : "black"
+      setSelectedColor(defaultCol)
+      syncUrlParams(cardId, defaultCol)
+    },
+    [syncUrlParams]
+  )
+
+  const handleSelectColor = React.useCallback(
+    (colorId: string) => {
+      setSelectedColor(colorId)
+      syncUrlParams(selectedCardId, colorId)
+    },
+    [selectedCardId, syncUrlParams]
+  )
+
+  // Keep state in sync if URL searchParams change
+  React.useEffect(() => {
+    const cParam = searchParams.get("card")
+    const clrParam = searchParams.get("color")
+    if (cParam) {
+      const matchCard = CARD_VARIANTS.find(
+        (c) => c.id.toLowerCase() === cParam.toLowerCase()
+      )
+      if (matchCard) {
+        setSelectedCardId(matchCard.id)
+        if (clrParam) {
+          const matchColor = matchCard.colors.find(
+            (c) => c.id.toLowerCase() === clrParam.toLowerCase()
+          )
+          if (matchColor) setSelectedColor(matchColor.id)
+        }
+      }
+    } else if (clrParam) {
+      const currentCard = CARD_VARIANTS.find((c) => c.id === selectedCardId) || CARD_VARIANTS[1]
+      const matchColor = currentCard.colors.find(
+        (c) => c.id.toLowerCase() === clrParam.toLowerCase()
+      )
+      if (matchColor) setSelectedColor(matchColor.id)
+    }
+  }, [searchParams, selectedCardId])
+
+  // Step 2: Card details (Starts empty so placeholders are visible & typing triggers live preview updates)
   const [cardDetails, setCardDetails] = React.useState({
-    fullName: "Aryan Sharma",
-    designation: "Product Designer",
-    company: "Design Studio",
-    phone: "+91 98765 43210",
-    email: "aryan@example.com",
-    website: "aryansharma.design",
+    fullName: "",
+    designation: "",
+    company: "",
+    phone: "",
+    email: "",
+    website: "",
+    logoUrl: null as string | null,
+    logoFileName: "",
   })
 
   // Step 3: Delivery Address
   const [address, setAddress] = React.useState({
-    recipientName: "Aryan Sharma",
-    phone: "9876543210",
-    street: "Flat 402, Skyline Towers, Indiranagar 100ft Road",
-    city: "Bengaluru",
-    state: "Karnataka",
-    pincode: "560038",
+    recipientName: "",
+    phone: "",
+    street: "",
+    city: "",
+    state: "",
+    pincode: "",
   })
 
   // Step 4: Payment
@@ -219,10 +295,14 @@ export default function OrderPage() {
         body: JSON.stringify({
           cardModel: selectedCardId,
           cardColor: selectedColor,
-          cardDetails,
+          cardDetails: {
+            ...cardDetails,
+            fullName: cardDetails.fullName.trim() || address.recipientName.trim() || "Aryan Sharma",
+            phone: cardDetails.phone.trim() || address.phone.trim(),
+          },
           shippingAddress: {
-            fullName: address.recipientName,
-            phone: address.phone,
+            fullName: address.recipientName.trim() || cardDetails.fullName.trim() || "Aryan Sharma",
+            phone: address.phone.trim() || cardDetails.phone.trim(),
             addressLine1: address.street,
             city: address.city,
             state: address.state,
@@ -424,9 +504,15 @@ export default function OrderPage() {
                   <span className="font-semibold">{confirmedOrder.quantity || 1} card(s)</span>
                 </div>
                 <div className="flex justify-between border-b border-border pb-2">
-                  <span className="text-muted">Recipient Name:</span>
+                  <span className="text-muted">Cardholder Name:</span>
                   <span className="font-semibold">{cardDetails.fullName}</span>
                 </div>
+                {address.recipientName && address.recipientName !== cardDetails.fullName && (
+                  <div className="flex justify-between border-b border-border pb-2">
+                    <span className="text-muted">Shipping Recipient:</span>
+                    <span className="font-semibold">{address.recipientName}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-b border-border pb-2">
                   <span className="text-muted">Delivery Address:</span>
                   <span className="text-right max-w-[240px] truncate">
@@ -532,8 +618,7 @@ export default function OrderPage() {
                               aria-checked={isSelected}
                               tabIndex={0}
                               onClick={() => {
-                                setSelectedCardId(card.id)
-                                setSelectedColor(card.colors[0].id)
+                                handleSelectCard(card.id)
                                 if (card.id === "corporate" && quantity < 10) {
                                   setQuantity(10)
                                   setQuantityInput("10")
@@ -542,8 +627,7 @@ export default function OrderPage() {
                               onKeyDown={(e) => {
                                 if (e.key === " " || e.key === "Enter") {
                                   e.preventDefault()
-                                  setSelectedCardId(card.id)
-                                  setSelectedColor(card.colors[0].id)
+                                  handleSelectCard(card.id)
                                   if (card.id === "corporate" && quantity < 10) {
                                     setQuantity(10)
                                     setQuantityInput("10")
@@ -596,6 +680,23 @@ export default function OrderPage() {
                         })}
                       </div>
 
+                      {/* Corporate Multi-Member Studio Callout */}
+                      {selectedCardId === "corporate" && (
+                        <div className="p-4 rounded-2xl bg-accent/10 border border-accent/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
+                          <div className="space-y-0.5">
+                            <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5 text-accent" /> Need Multi-Member Team Cards or Custom Design?
+                            </div>
+                            <p className="text-xs text-muted">
+                              Use our dedicated Corporate Studio to configure individual team member cards, adjust logo placement, or describe your custom design in plain text.
+                            </p>
+                          </div>
+                          <Button size="sm" className="h-9 px-4 text-xs font-bold bg-accent hover:bg-accent-hover text-white shrink-0 rounded-xl shadow-xs" asChild>
+                            <Link href="/products/corporate/configure">Open Corporate Studio &rarr;</Link>
+                          </Button>
+                        </div>
+                      )}
+
                       {/* Color Selector */}
                       <div className="pt-4 border-t border-border">
                         <label className="text-sm font-bold block mb-3">Choose Card Color:</label>
@@ -606,7 +707,7 @@ export default function OrderPage() {
                               type="button"
                               role="radio"
                               aria-checked={selectedColor === c.id}
-                              onClick={() => setSelectedColor(c.id)}
+                              onClick={() => handleSelectColor(c.id)}
                               className={`card-selectable select-none cursor-pointer flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
                                 selectedColor === c.id
                                   ? "border-accent bg-accent/10 text-foreground font-bold"
@@ -614,9 +715,17 @@ export default function OrderPage() {
                               }`}
                             >
                               <span
-                                className="w-4 h-4 rounded-full border border-gray-400"
-                                style={{ backgroundColor: c.bg }}
-                              ></span>
+                                className={`rounded-full shrink-0 relative overflow-hidden ${
+                                  selectedCard.id === "metal"
+                                    ? "w-4.5 h-4.5 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.75),0_1.5px_3px_rgba(0,0,0,0.35)] border border-black/30 ring-1 ring-white/30"
+                                    : "w-4 h-4 border border-gray-400"
+                                }`}
+                                style={{ background: c.bg }}
+                              >
+                                {selectedCard.id === "metal" && (
+                                  <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/40 to-transparent pointer-events-none" />
+                                )}
+                              </span>
                               {c.name}
                             </button>
                           ))}
@@ -714,16 +823,26 @@ export default function OrderPage() {
                       >
                         <div>
                           <label className="text-sm font-semibold text-foreground mb-1 block">
-                            Full Name (Printed on Card)
+                            Full Name (Printed &amp; Engraved on Card)
                           </label>
+                          <p className="text-xs text-muted mb-2">
+                            This exact name will be engraved on your smart card in real time.
+                          </p>
                           <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted" />
                             <input
                               type="text"
                               value={cardDetails.fullName}
-                              onChange={(e) =>
-                                setCardDetails({ ...cardDetails, fullName: e.target.value })
-                              }
+                              onChange={(e) => {
+                                const val = e.target.value
+                                setCardDetails((prev) => ({ ...prev, fullName: val }))
+                                setAddress((prev) => {
+                                  if (!prev.recipientName || prev.recipientName === cardDetails.fullName) {
+                                    return { ...prev, recipientName: val }
+                                  }
+                                  return prev
+                                })
+                              }}
                               placeholder="e.g. Aryan Sharma"
                               required
                               className="w-full h-12 pl-10 pr-4 bg-surface-hover border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent outline-none"
@@ -767,19 +886,35 @@ export default function OrderPage() {
                           </div>
                         </div>
 
+                        {/* Optional Company Logo Upload */}
+                        <CompanyLogoUpload
+                          logoUrl={cardDetails.logoUrl}
+                          logoFileName={cardDetails.logoFileName}
+                          onLogoChange={({ logoUrl, logoFileName }) => {
+                            setCardDetails((prev) => ({ ...prev, logoUrl, logoFileName }))
+                          }}
+                        />
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="text-sm font-semibold text-foreground mb-1 block">
-                              Phone Number
+                              Phone Number (Card Profile)
                             </label>
                             <div className="relative">
                               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted" />
                               <input
                                 type="text"
                                 value={cardDetails.phone}
-                                onChange={(e) =>
-                                  setCardDetails({ ...cardDetails, phone: e.target.value })
-                                }
+                                onChange={(e) => {
+                                  const val = e.target.value
+                                  setCardDetails((prev) => ({ ...prev, phone: val }))
+                                  setAddress((prev) => {
+                                    if (!prev.phone || prev.phone === cardDetails.phone) {
+                                      return { ...prev, phone: val }
+                                    }
+                                    return prev
+                                  })
+                                }}
                                 placeholder="+91 98765 43210"
                                 required
                                 className="w-full h-12 pl-10 pr-4 bg-surface-hover border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent outline-none"
@@ -860,14 +995,25 @@ export default function OrderPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="text-sm font-semibold text-foreground mb-1 block">
-                              Recipient Name
+                              Delivery Recipient Name (For Courier Package)
                             </label>
+                            <p className="text-xs text-muted mb-1.5">
+                              Person receiving package at delivery address. Defaults to cardholder name.
+                            </p>
                             <input
                               type="text"
                               value={address.recipientName}
-                              onChange={(e) =>
-                                setAddress({ ...address, recipientName: e.target.value })
-                              }
+                              onChange={(e) => {
+                                const val = e.target.value
+                                setAddress((prev) => ({ ...prev, recipientName: val }))
+                                setCardDetails((prev) => {
+                                  if (!prev.fullName || prev.fullName === address.recipientName) {
+                                    return { ...prev, fullName: val }
+                                  }
+                                  return prev
+                                })
+                              }}
+                              placeholder={cardDetails.fullName || "e.g. Aryan Sharma"}
                               required
                               className="w-full h-12 px-4 bg-surface-hover border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent outline-none"
                             />
@@ -876,12 +1022,23 @@ export default function OrderPage() {
                             <label className="text-sm font-semibold text-foreground mb-1 block">
                               Mobile Number (for Courier updates)
                             </label>
+                            <p className="text-xs text-muted mb-1.5">
+                              For shipment tracking and delivery coordination.
+                            </p>
                             <input
                               type="tel"
                               value={address.phone}
-                              onChange={(e) =>
-                                setAddress({ ...address, phone: e.target.value })
-                              }
+                              onChange={(e) => {
+                                const val = e.target.value
+                                setAddress((prev) => ({ ...prev, phone: val }))
+                                setCardDetails((prev) => {
+                                  if (!prev.phone || prev.phone === address.phone) {
+                                    return { ...prev, phone: val }
+                                  }
+                                  return prev
+                                })
+                              }}
+                              placeholder={cardDetails.phone || "+91 98765 43210"}
                               required
                               className="w-full h-12 px-4 bg-surface-hover border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent outline-none"
                             />
@@ -1173,37 +1330,22 @@ export default function OrderPage() {
 
                 {/* Right Card Live Preview & Order Summary (5 cols) */}
                 <div className="lg:col-span-5 space-y-6">
-                  {/* Live Card Preview Widget */}
-                  <Card className="border-border shadow-md overflow-hidden bg-surface">
-                    <CardHeader className="pb-3 border-b border-border bg-surface-hover">
-                      <div className="flex justify-between items-center">
-                        <CardTitle className="text-base font-bold flex items-center gap-2">
-                          <Sparkles className="h-4 w-4 text-accent" /> Live Card Preview
-                        </CardTitle>
-                        <span className="text-[11px] font-mono uppercase bg-accent/10 text-accent font-bold px-2 py-0.5 rounded">
-                          {selectedCard.name}
-                        </span>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="p-6 flex flex-col items-center justify-center">
-                      {/* Virtual Card Graphic */}
-                      <div className="w-full max-w-[340px] drop-shadow-2xl">
-                        <SmartCardVisual
-                          slug={selectedCard.id as any}
-                          colorId={selectedColor}
-                          fullName={cardDetails.fullName || "Your Full Name"}
-                          designation={cardDetails.designation || "Title / Designation"}
-                          company={cardDetails.company || "Company Name"}
-                          size="md"
-                          interactive={false}
-                        />
-                      </div>
-                      <p className="text-[11px] text-muted text-center mt-4">
-                        Front side mockup. Back includes personal QR Code & NFC Chip.
-                      </p>
-                    </CardContent>
-                  </Card>
+                  {/* Shared Reusable Live Card Preview */}
+                  <LiveCardPreview
+                    slug={selectedCard.id}
+                    colorId={selectedColor}
+                    modelName={selectedCard.name}
+                    fullName={cardDetails.fullName || address.recipientName || ""}
+                    defaultName="Your Full Name"
+                    designation={cardDetails.designation}
+                    defaultDesignation="Title / Designation"
+                    company={cardDetails.company}
+                    defaultCompany="Company Name"
+                    phone={cardDetails.phone || address.phone || ""}
+                    website={cardDetails.website}
+                    logoUrl={cardDetails.logoUrl || null}
+                    subtext="Front side mockup. Back includes personal QR Code & NFC Chip."
+                  />
 
                   {/* Summary Breakdown */}
                   <Card className="border-border shadow-sm">
@@ -1287,5 +1429,13 @@ export default function OrderPage() {
       </main>
       <Footer />
     </>
+  )
+}
+
+export default function OrderPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <OrderPageContent />
+    </React.Suspense>
   )
 }

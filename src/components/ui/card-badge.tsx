@@ -5,7 +5,7 @@ import * as React from "react"
 export interface CardBadgeProps {
   /** Width in pixels (e.g. 48, 50, 52) or preset ('sm' = 44, 'md' = 52, 'lg' = 64). Defaults to 50. */
   size?: number | "sm" | "md" | "lg"
-  /** Color ID matching the catalog: 'black', 'white', 'teal', 'burgundy', 'navy', 'silver', 'metal-black', 'custom' */
+  /** Color ID matching the catalog: 'black', 'white', 'teal', 'burgundy', 'navy', 'silver', 'metal-black', 'gold', 'bronze', 'rose-gold', 'royal-gold', 'emerald', 'custom' */
   colorId?: string | null
   /** Tier ID fallback if colorId not provided: 'essential', 'premium', 'metal', 'corporate' */
   tierId?: string | null
@@ -71,17 +71,52 @@ const COLOR_CONFIGS: Record<string, ResolvedStyle> = {
     isLight: false,
   },
   silver: {
-    bgGradient: "linear-gradient(135deg, #e4e4e7 0%, #a1a1aa 50%, #52525b 100%)",
-    borderClass: "border-zinc-300/80 ring-1 ring-white/40",
-    glowColor: "rgba(228, 228, 231, 0.35)",
-    glowOpacity: 0.35,
+    bgGradient: "linear-gradient(135deg, #4b515b 0%, #aeb5bf 40%, #595f6a 70%, #8c939e 100%)",
+    borderClass: "border-slate-300/90 ring-1 ring-white/50",
+    glowColor: "rgba(174, 181, 191, 0.4)",
+    glowOpacity: 0.4,
     isLight: true,
   },
   "metal-black": {
-    bgGradient: "linear-gradient(135deg, #323238 0%, #1c1c20 50%, #09090b 100%)",
-    borderClass: "border-zinc-500/50 ring-1 ring-white/15",
-    glowColor: "rgba(82, 82, 91, 0.35)",
-    glowOpacity: 0.35,
+    bgGradient: "linear-gradient(135deg, #090b0e 0%, #313742 40%, #0d0f13 70%, #22262f 100%)",
+    borderClass: "border-zinc-500/70 ring-1 ring-white/20",
+    glowColor: "rgba(49, 55, 66, 0.45)",
+    glowOpacity: 0.45,
+    isLight: false,
+  },
+  gold: {
+    bgGradient: "linear-gradient(135deg, #6c4b10 0%, #eac75f 40%, #6e4c12 70%, #ba8e2f 100%)",
+    borderClass: "border-amber-400/90 ring-1 ring-amber-200/50",
+    glowColor: "rgba(234, 199, 95, 0.45)",
+    glowOpacity: 0.45,
+    isLight: true,
+  },
+  bronze: {
+    bgGradient: "linear-gradient(135deg, #381f0e 0%, #a9673b 40%, #3d2110 70%, #7d4824 100%)",
+    borderClass: "border-amber-700/80 ring-1 ring-amber-500/30",
+    glowColor: "rgba(169, 103, 59, 0.45)",
+    glowOpacity: 0.45,
+    isLight: false,
+  },
+  "rose-gold": {
+    bgGradient: "linear-gradient(135deg, #b76e79 0%, #fce7f3 48%, #7c3f4a 100%)",
+    borderClass: "border-rose-300/80 ring-1 ring-rose-200/40",
+    glowColor: "rgba(183, 110, 121, 0.4)",
+    glowOpacity: 0.4,
+    isLight: false,
+  },
+  "royal-gold": {
+    bgGradient: "linear-gradient(135deg, #181205 0%, #3d2c0b 45%, #694e16 100%)",
+    borderClass: "border-amber-500/40 ring-1 ring-amber-400/25",
+    glowColor: "rgba(245, 158, 11, 0.4)",
+    glowOpacity: 0.4,
+    isLight: false,
+  },
+  emerald: {
+    bgGradient: "linear-gradient(135deg, #021a12 0%, #063826 50%, #0a4f36 100%)",
+    borderClass: "border-emerald-500/35 ring-1 ring-emerald-400/20",
+    glowColor: "rgba(16, 185, 129, 0.4)",
+    glowOpacity: 0.4,
     isLight: false,
   },
   custom: {
@@ -110,10 +145,10 @@ const TIER_DEFAULTS: Record<string, ResolvedStyle> = {
     isLight: false,
   },
   metal: {
-    bgGradient: "linear-gradient(135deg, #e4e4e7 0%, #a1a1aa 50%, #52525b 100%)",
-    borderClass: "border-zinc-400/50 ring-1 ring-white/30",
-    glowColor: "rgba(228, 228, 231, 0.35)",
-    glowOpacity: 0.35,
+    bgGradient: "linear-gradient(135deg, #4b515b 0%, #aeb5bf 40%, #595f6a 70%, #8c939e 100%)",
+    borderClass: "border-slate-300/80 ring-1 ring-white/50",
+    glowColor: "rgba(174, 181, 191, 0.4)",
+    glowOpacity: 0.4,
     isLight: true,
   },
   corporate: {
@@ -130,7 +165,8 @@ const TIER_DEFAULTS: Record<string, ResolvedStyle> = {
  * Features:
  * - Universal contactless / NFC payment wave symbol
  * - Dimensional diagonal card surface gradient
- * - Muted brushed metallic brass EMV chip with understated ISO contact traces
+ * - Pure contactless smart card aesthetic with universal payment wave
+ * - Dimensional diagonal card surface gradient
  * - Soft, low-opacity diagonal light sheen across the glossy card face
  * - Same-color ambient glow bleeding softly behind the card
  * - Realistic ~1.586:1 credit-card proportions
@@ -147,10 +183,6 @@ export function CardBadge({
   ariaLabel,
   className = "",
 }: CardBadgeProps) {
-  // Stable unique ID for SVG gradient definitions
-  const rawId = React.useId()
-  const chipGradId = `chip-metal-${rawId.replace(/[^a-zA-Z0-9_-]/g, "")}`
-
   // Standard credit card proportions: 85.60 mm × 53.98 mm (~1.586:1 ratio)
   const widthPx = typeof size === "number" ? size : size === "sm" ? 44 : size === "lg" ? 64 : 52
   const heightPx = Math.round(widthPx / 1.586)
@@ -187,11 +219,16 @@ export function CardBadge({
     const cId = colorId?.toLowerCase().trim()
     if (cId) {
       if (COLOR_CONFIGS[cId]) return COLOR_CONFIGS[cId]
+      if (cId.includes("emerald") || cId.includes("green")) return COLOR_CONFIGS.emerald
+      if (cId.includes("royal-gold") || (tierId === "premium" && cId.includes("gold"))) return COLOR_CONFIGS["royal-gold"]
+      if (cId.includes("gold") || cId.includes("brass")) return COLOR_CONFIGS.gold
+      if (cId.includes("silver") || cId.includes("steel")) return COLOR_CONFIGS.silver
+      if (cId.includes("bronze")) return COLOR_CONFIGS.bronze
+      if (cId.includes("metal-black") || cId.includes("gunmetal") || (tierId === "metal" && cId.includes("black"))) return COLOR_CONFIGS["metal-black"]
+      if (cId.includes("rose") || cId.includes("copper")) return COLOR_CONFIGS["rose-gold"]
       if (cId.includes("teal")) return COLOR_CONFIGS.teal
       if (cId.includes("burgundy") || cId.includes("wine") || cId.includes("red")) return COLOR_CONFIGS.burgundy
       if (cId.includes("white")) return COLOR_CONFIGS.white
-      if (cId.includes("silver") || cId.includes("steel")) return COLOR_CONFIGS.silver
-      if (cId.includes("metal-black") || cId.includes("gunmetal")) return COLOR_CONFIGS["metal-black"]
       if (cId.includes("black")) return COLOR_CONFIGS.black
       if (cId.includes("navy") || cId.includes("blue")) return COLOR_CONFIGS.navy
       if (cId.includes("custom") || cId.includes("corp") || cId.includes("purple")) return COLOR_CONFIGS.custom
@@ -288,85 +325,14 @@ export function CardBadge({
           />
         </div>
 
-        {/* 4. REFINED METALLIC BRASS EMV CHIP */}
+        {/* 4. CONTACTLESS / NFC PAYMENT SYMBOL (Universal 3 concentric curved arcs oriented sideways) */}
         <div
           className="absolute pointer-events-none"
           style={{
-            top: "26%",
-            left: "12%",
-            width: "20%",
+            top: "28%",
+            left: "14%",
+            width: "16%",
             height: "26%",
-            filter: "drop-shadow(0 0.5px 0.8px rgba(0,0,0,0.4))",
-          }}
-        >
-          <svg
-            viewBox="0 0 24 18"
-            className="w-full h-full block"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <defs>
-              {/* Subtle muted metallic gold/brass gradient */}
-              <linearGradient id={chipGradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#E4CDA2" />
-                <stop offset="35%" stopColor="#CDB078" />
-                <stop offset="70%" stopColor="#B89658" />
-                <stop offset="100%" stopColor="#8E6F36" />
-              </linearGradient>
-            </defs>
-
-            {/* Muted Metallic Chip Base Silhouette */}
-            <rect
-              width="24"
-              height="18"
-              rx="2"
-              fill={`url(#${chipGradId})`}
-              stroke="#6B5023"
-              strokeWidth="0.65"
-            />
-
-            {/* Subtle, Low-Contrast Contact Trace Hairlines */}
-            <line
-              x1="0"
-              y1="9"
-              x2="24"
-              y2="9"
-              stroke="#5C4318"
-              strokeWidth="0.55"
-              strokeOpacity="0.45"
-            />
-            <rect
-              x="7"
-              y="4"
-              width="10"
-              height="10"
-              rx="1"
-              stroke="#5C4318"
-              strokeWidth="0.55"
-              strokeOpacity="0.45"
-              fill="none"
-            />
-            <line
-              x1="12"
-              y1="4"
-              x2="12"
-              y2="14"
-              stroke="#5C4318"
-              strokeWidth="0.55"
-              strokeOpacity="0.45"
-            />
-          </svg>
-        </div>
-
-        {/* 5. CONTACTLESS / NFC PAYMENT SYMBOL (Universal 3 concentric curved arcs oriented sideways) */}
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: "27%",
-            left: "36%",
-            width: "14%",
-            height: "24%",
           }}
         >
           <svg

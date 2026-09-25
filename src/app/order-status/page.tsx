@@ -985,14 +985,32 @@ function OrderStatusContent() {
                   <div className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
                     <Receipt className="h-3.5 w-3.5 text-accent" /> Payment &amp; Item Details
                   </div>
+                  {searchedOrder.items && searchedOrder.items.length > 1 ? (
+                    <div className="space-y-1.5 py-1.5 border-y border-border/70 my-1">
+                      <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">
+                        Ordered Items ({searchedOrder.quantity || searchedOrder.items.length}):
+                      </span>
+                      {searchedOrder.items.map((it: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center text-xs">
+                          <span className="text-foreground font-medium">
+                            {it.productName || it.card?.name || it.cardModel} ({it.colorName || it.color})
+                          </span>
+                          <span className="text-muted">
+                            {it.quantity}x &bull; ₹{(it.unitPrice || 0) * (it.quantity || 1)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted">Item:</span>
+                      <span className="font-semibold text-foreground text-right truncate max-w-[200px]">
+                        {searchedOrder.cardName}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted">Item:</span>
-                    <span className="font-semibold text-foreground text-right truncate max-w-[200px]">
-                      {searchedOrder.cardName}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted">Quantity:</span>
+                    <span className="text-muted">Total Quantity:</span>
                     <span className="font-semibold text-foreground">{searchedOrder.quantity || 1} card(s)</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">

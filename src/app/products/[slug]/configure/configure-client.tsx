@@ -9,7 +9,11 @@ import { Section } from "@/components/ui/section"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import type { Product } from "@/lib/products"
-import { SmartCardVisual } from "@/components/ui/smart-card-visual"
+import { LiveCardPreview } from "@/components/live-card-preview"
+import { CompanyLogoUpload } from "@/components/company-logo-upload"
+import type { NameAlignment, LogoAlignment, CardLayoutTemplate } from "@/components/ui/smart-card-visual"
+import { CardLayoutCarousel } from "@/components/card-layout-carousel"
+import { useOrderCart } from "@/lib/order-cart"
 import {
   CheckCircle2,
   Sparkles,
@@ -32,6 +36,12 @@ import {
   Upload,
   AlertCircle,
   Loader2,
+  Sliders,
+  Plus,
+  Minus,
+  Trash2,
+  ShoppingBag,
+  ShoppingCart,
 } from "lucide-react"
 import Script from "next/script"
 import type { RazorpayOptions, RazorpaySuccessResponse } from "@/types/razorpay"
@@ -97,33 +107,69 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
   const searchParams = useSearchParams()
   const initialColorParam = searchParams.get("color")
   const defaultColor =
-    (initialColorParam && product.colors.find((c) => c.id === initialColorParam)?.id) ||
+    (initialColorParam &&
+      product.colors.find(
+        (c) => c.id.toLowerCase() === initialColorParam.toLowerCase()
+      )?.id) ||
     product.colors[0].id
 
   // Color selection state
   const [selectedColor, setSelectedColor] = React.useState(defaultColor)
 
+  // Helper to change color and immediately synchronize URL query parameter (?color=)
+  const handleSelectColor = React.useCallback((colorId: string) => {
+    setSelectedColor(colorId)
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      url.searchParams.set("color", colorId)
+      window.history.replaceState(null, "", url.toString())
+    }
+  }, [])
+
+  // Keep selectedColor in sync if URL searchParams change (e.g. client-side navigation or direct link)
+  React.useEffect(() => {
+    const colorParam = searchParams.get("color")
+    if (colorParam) {
+      const match = product.colors.find(
+        (c) => c.id.toLowerCase() === colorParam.toLowerCase()
+      )
+      if (match) {
+        setSelectedColor(match.id)
+      }
+    }
+  }, [searchParams, product.colors])
+
   // Ordering step state (1: Finish, 2: Details, 3: Shipping, 4: Payment/Review)
   const [step, setStep] = React.useState(1)
 
-  // Step 2: Card printing details
+  // Card Layout Template state (Essential, Premium, Metal: Classic, Logo Focus, Name Focus)
+  const [layoutTemplate, setLayoutTemplate] = React.useState<CardLayoutTemplate>("classic")
+
+  // Layout Adjustment state for Premium and Metal cards only (Not Essential, Corporate has full canvas)
+  const isLayoutAdjustable = product.slug === "premium" || product.slug === "metal"
+  const [nameAlignment, setNameAlignment] = React.useState<NameAlignment>("bottom-left")
+  const [logoAlignment, setLogoAlignment] = React.useState<LogoAlignment>("top-left")
+
+  // Step 2: Card printing details (Starts empty so placeholders are visible & typing triggers live updates)
   const [cardDetails, setCardDetails] = React.useState({
-    fullName: "Aryan Sharma",
-    designation: "Product Designer",
-    company: "Design Studio",
-    phone: "+91 98765 43210",
-    email: "aryan@example.com",
-    website: "aryansharma.design",
+    fullName: "",
+    designation: "",
+    company: "",
+    phone: "",
+    email: "",
+    website: "",
+    logoUrl: null as string | null,
+    logoFileName: "",
   })
 
   // Step 3: Delivery address
   const [address, setAddress] = React.useState({
-    recipientName: "Aryan Sharma",
-    phone: "9876543210",
-    street: "Flat 402, Skyline Towers, Indiranagar 100ft Road",
-    city: "Bengaluru",
-    state: "Karnataka",
-    pincode: "560038",
+    recipientName: "",
+    phone: "",
+    street: "",
+    city: "",
+    state: "",
+    pincode: "",
   })
 
   // Step 4: Payment & Discounts
@@ -194,17 +240,88 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
   const [isCompleted, setIsCompleted] = React.useState(false)
   const [paymentError, setPaymentError] = React.useState<string | null>(null)
   const [configureHovered, setConfigureHovered] = React.useState(false)
+  const [justAddedToCart, setJustAddedToCart] = React.useState(false)
+  const cart = useOrderCart()
+
   const [orderConfirmation, setOrderConfirmation] = React.useState<{
     orderId: string
     amount: number
     isCod: boolean
     quantity?: number
+    items?: any[]
   } | null>(null)
 
   const activeColorObj =
-    product.colors.find((c) => c.id === selectedColor) || product.colors[0]
+    product.colors.find((c) => c.id.toLowerCase() === selectedColor.toLowerCase()) ||
+    product.colors[0]
 
-  const baseSubtotal = product.price * quantity
+  // Effective items for order: if cart has items, use cart.items; otherwise fallback to currently configured single card
+  const effectiveItems = React.useMemo(() => {
+    if (cart.items.length > 0) {
+      return cart.items
+    }
+    return [
+      {
+        id: "current_item",
+        productSlug: product.slug as "essential" | "premium" | "metal",
+        productName: product.name,
+        colorId: selectedColor,
+        colorName: activeColorObj.name,
+        colorBg: activeColorObj.bg,
+        quantity,
+        unitPrice: product.price,
+        material: product.material,
+        nameAlignment: isLayoutAdjustable ? nameAlignment : undefined,
+        logoAlignment: isLayoutAdjustable ? logoAlignment : undefined,
+        layoutTemplate: product.slug !== "corporate" ? layoutTemplate : undefined,
+      },
+    ]
+  }, [cart.items, product.slug, product.name, product.price, product.material, selectedColor, activeColorObj, quantity, isLayoutAdjustable, nameAlignment, logoAlignment, layoutTemplate])
+
+  const effectiveTotalQuantity = React.useMemo(() => {
+    return cart.items.length > 0 ? cart.totalQuantity : quantity
+  }, [cart.items.length, cart.totalQuantity, quantity])
+
+  const baseSubtotal = React.useMemo(() => {
+    return cart.items.length > 0 ? cart.subtotal : product.price * quantity
+  }, [cart.items.length, cart.subtotal, product.price, quantity])
+
+  const handleAddToCart = () => {
+    cart.addItem({
+      productSlug: product.slug as "essential" | "premium" | "metal",
+      productName: product.name,
+      colorId: selectedColor,
+      colorName: activeColorObj.name,
+      colorBg: activeColorObj.bg,
+      quantity,
+      unitPrice: product.price,
+      material: product.material,
+      nameAlignment: isLayoutAdjustable ? nameAlignment : undefined,
+      logoAlignment: isLayoutAdjustable ? logoAlignment : undefined,
+      layoutTemplate: product.slug !== "corporate" ? layoutTemplate : undefined,
+    })
+    setJustAddedToCart(true)
+    setTimeout(() => setJustAddedToCart(false), 2500)
+  }
+
+  const handleContinueFromStep1 = () => {
+    if (cart.items.length === 0 && !product.isCustomPricing) {
+      cart.addItem({
+        productSlug: product.slug as "essential" | "premium" | "metal",
+        productName: product.name,
+        colorId: selectedColor,
+        colorName: activeColorObj.name,
+        colorBg: activeColorObj.bg,
+        quantity,
+        unitPrice: product.price,
+        material: product.material,
+        nameAlignment: isLayoutAdjustable ? nameAlignment : undefined,
+        logoAlignment: isLayoutAdjustable ? logoAlignment : undefined,
+        layoutTemplate: product.slug !== "corporate" ? layoutTemplate : undefined,
+      })
+    }
+    setStep(2)
+  }
 
   React.useEffect(() => {
     if (couponApplied) {
@@ -215,7 +332,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
         setDiscount(baseSubtotal)
       }
     }
-  }, [quantity, product.price, couponApplied, coupon, baseSubtotal])
+  }, [couponApplied, coupon, baseSubtotal])
 
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault()
@@ -293,16 +410,37 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
 
       // 2. Request order creation from server (POST /api/orders/create)
       console.log("[handlePlaceOrder] Requesting order creation from /api/orders/create...")
+      const payloadItems = (cart.items.length > 0 ? cart.items : effectiveItems).map((i) => ({
+        productSlug: i.productSlug,
+        cardModel: i.productSlug,
+        colorId: i.colorId,
+        color: i.colorId,
+        colorName: i.colorName,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        nameAlignment: i.nameAlignment,
+        logoAlignment: i.logoAlignment,
+        layoutTemplate: i.layoutTemplate || (product.slug !== "corporate" ? layoutTemplate : undefined),
+      }))
+
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cardModel: product.slug,
           cardColor: selectedColor,
-          cardDetails,
+          items: payloadItems,
+          cardDetails: {
+            ...cardDetails,
+            fullName: cardDetails.fullName.trim() || address.recipientName.trim() || "Aryan Sharma",
+            phone: cardDetails.phone.trim() || address.phone.trim(),
+            nameAlignment: isLayoutAdjustable ? nameAlignment : undefined,
+            logoAlignment: isLayoutAdjustable ? logoAlignment : undefined,
+            layoutTemplate: !product.isCustomPricing ? layoutTemplate : undefined,
+          },
           shippingAddress: {
-            fullName: address.recipientName || cardDetails.fullName,
-            phone: address.phone,
+            fullName: address.recipientName.trim() || cardDetails.fullName.trim() || "Aryan Sharma",
+            phone: address.phone.trim() || cardDetails.phone.trim(),
             addressLine1: address.street,
             city: address.city,
             state: address.state,
@@ -310,7 +448,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
           },
           paymentMethod: paymentMode === "cod" ? "cod" : "online",
           couponCode: couponApplied ? coupon : null,
-          quantity,
+          quantity: effectiveTotalQuantity,
         }),
       })
 
@@ -324,11 +462,13 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
       // 3. If Cash on Delivery, complete immediately
       if (paymentMode === "cod" || data.isCod) {
         console.log("[handlePlaceOrder] COD confirmed with order ID:", data.orderId)
+        cart.clearCart()
         setOrderConfirmation({
           orderId: data.orderId,
           amount: finalAmount,
           isCod: true,
-          quantity,
+          quantity: data.quantity || effectiveTotalQuantity,
+          items: data.items || payloadItems,
         })
         setIsCompleted(true)
         setIsSubmitting(false)
@@ -360,7 +500,7 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
         amount: data.amount,
         currency: data.currency || "INR",
         name: "TapOnce",
-        description: `${product.name} NFC Smart Card (${quantity}x)`,
+        description: `${product.name} NFC Smart Card (${effectiveTotalQuantity}x)`,
         image: "/Taponce_logo.png",
         order_id: data.razorpayOrderId,
         prefill: {
@@ -420,11 +560,13 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
               throw new Error(verifyData.error || "Payment signature verification failed.")
             }
 
+            cart.clearCart()
             setOrderConfirmation({
               orderId: data.orderId,
               amount: finalAmount,
               isCod: false,
-              quantity,
+              quantity: data.quantity || effectiveTotalQuantity,
+              items: data.items || payloadItems,
             })
             setIsCompleted(true)
             if (typeof window !== "undefined") {
@@ -539,22 +681,61 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                     <span className="text-muted">Order Reference:</span>
                     <span className="font-bold text-foreground">{orderConfirmation.orderId}</span>
                   </div>
+
+                  {orderConfirmation.items && orderConfirmation.items.length > 1 ? (
+                    <div className="border-b border-border pb-2 space-y-1.5">
+                      <div className="text-muted font-sans font-bold text-[11px] uppercase tracking-wider">
+                        Ordered Cards ({orderConfirmation.quantity || orderConfirmation.items.length}):
+                      </div>
+                      {orderConfirmation.items.map((it: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center text-foreground font-sans">
+                          <span>
+                            {it.productName || it.card?.name || it.cardModel} ({it.colorName || it.color}) × {it.quantity}
+                          </span>
+                          <span className="font-semibold font-mono">
+                            ₹{(it.unitPrice || 0) * (it.quantity || 1)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex justify-between border-b border-border pb-2">
+                      <span className="text-muted">Selected Product:</span>
+                      <span className="font-semibold text-accent">
+                        {product.name} ({activeColorObj.name})
+                      </span>
+                    </div>
+                  )}
+
+                  {!product.isCustomPricing && (
+                    <div className="flex justify-between border-b border-border pb-2">
+                      <span className="text-muted">Card Layout:</span>
+                      <span className="font-semibold text-accent capitalize">
+                        {layoutTemplate === "classic"
+                          ? "Classic"
+                          : layoutTemplate === "logo-focus"
+                          ? "Logo Focus"
+                          : "Name Focus"}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between border-b border-border pb-2">
-                    <span className="text-muted">Selected Product:</span>
-                    <span className="font-semibold text-accent">
-                      {product.name} ({activeColorObj.name})
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-b border-border pb-2">
-                    <span className="text-muted">Quantity:</span>
+                    <span className="text-muted">Total Quantity:</span>
                     <span className="font-semibold text-foreground">
                       {product.isCustomPricing ? `${corporateDetails.quantity} cards` : `${orderConfirmation.quantity || 1} card(s)`}
                     </span>
                   </div>
                   <div className="flex justify-between border-b border-border pb-2">
-                    <span className="text-muted">Recipient Name:</span>
+                    <span className="text-muted">Cardholder Name:</span>
                     <span className="font-semibold text-foreground">{cardDetails.fullName}</span>
                   </div>
+                  {address.recipientName && address.recipientName !== cardDetails.fullName && (
+                    <div className="flex justify-between border-b border-border pb-2">
+                      <span className="text-muted">Shipping Recipient:</span>
+                      <span className="font-semibold text-foreground">{address.recipientName}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between border-b border-border pb-2">
                     <span className="text-muted">Delivery Address:</span>
                     <span className="text-right max-w-[240px] truncate text-foreground">
@@ -681,9 +862,22 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                     {/* STEP 1: Card Finish & Color */}
                     {step === 1 && (
                       <div className="space-y-6">
+                        {/* Card Layout Template Selector (Essential, Premium, Metal) */}
+                        {!product.isCustomPricing && (
+                          <div className="pb-6 border-b border-border/80">
+                            <CardLayoutCarousel
+                              selectedTemplate={layoutTemplate}
+                              onSelectTemplate={setLayoutTemplate}
+                              slug={product.slug}
+                              colorId={selectedColor}
+                              cardDetails={cardDetails}
+                            />
+                          </div>
+                        )}
+
                         <div>
                           <h2 className="text-xl font-bold text-foreground mb-1">
-                            1. Select Your Card Finish
+                            {!product.isCustomPricing ? "Choose Your Card Finish" : "1. Select Your Card Finish"}
                           </h2>
                           <p className="text-xs text-muted">
                             Selected model: <strong className="text-accent">{product.name}</strong> ({product.material})
@@ -699,11 +893,11 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                                 role="radio"
                                 aria-checked={isSelected}
                                 tabIndex={0}
-                                onClick={() => setSelectedColor(c.id)}
+                                onClick={() => handleSelectColor(c.id)}
                                 onKeyDown={(e) => {
                                   if (e.key === " " || e.key === "Enter") {
                                     e.preventDefault()
-                                    setSelectedColor(c.id)
+                                    handleSelectColor(c.id)
                                   }
                                 }}
                                 className={`card-selectable select-none cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${
@@ -714,9 +908,17 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                               >
                                 <div className="flex items-center gap-3.5">
                                   <span
-                                    className="w-7 h-7 rounded-full border border-gray-400 shrink-0 shadow-xs"
-                                    style={{ backgroundColor: c.bg }}
-                                  />
+                                    className={`w-7 h-7 rounded-full shrink-0 shadow-xs relative overflow-hidden ${
+                                      product.slug === "metal"
+                                        ? "shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.75),0_2px_4px_rgba(0,0,0,0.3)] border border-black/30 ring-1 ring-white/30"
+                                        : "border border-gray-400"
+                                    }`}
+                                    style={{ background: c.bg }}
+                                  >
+                                    {product.slug === "metal" && (
+                                      <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/40 to-transparent pointer-events-none" />
+                                    )}
+                                  </span>
                                   <div>
                                     <div className="text-sm font-bold text-foreground">{c.name}</div>
                                     <div className="text-xs text-muted">{product.material}</div>
@@ -744,6 +946,8 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                             )
                           })}
                         </div>
+
+
 
                         {!product.isCustomPricing && (
                           <div className="p-4 rounded-2xl bg-surface border border-border shadow-xs flex items-center justify-between">
@@ -933,25 +1137,79 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                           </div>
                         )}
 
-                        <div className="flex gap-3 pt-4">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            asChild
-                            className="h-12 px-5 text-xs font-semibold"
-                          >
-                            <Link href={`/products/${product.slug}`}>
-                              <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Product
-                            </Link>
-                          </Button>
-                          <Button
-                            type="button"
-                            onClick={() => setStep(2)}
-                            size="lg"
-                            className="flex-1 h-12 text-sm font-bold bg-accent hover:bg-accent-hover text-white rounded-xl"
-                          >
-                            Continue to Card Printing Details <ArrowRight className="h-4 w-4 ml-2" />
-                          </Button>
+                        <div className="space-y-3 pt-4">
+                          <div className="flex flex-wrap sm:flex-nowrap gap-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              asChild
+                              className="h-12 px-4 text-xs font-semibold rounded-xl"
+                            >
+                              <Link href={`/products/${product.slug}`}>
+                                <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
+                              </Link>
+                            </Button>
+
+                            {!product.isCustomPricing && (
+                              <Button
+                                type="button"
+                                onClick={handleAddToCart}
+                                variant="outline"
+                                className={`h-12 px-4 text-xs font-bold rounded-xl border-2 transition-all flex items-center gap-1.5 ${
+                                  justAddedToCart
+                                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    : "border-accent/50 text-accent hover:border-accent hover:bg-accent/10"
+                                }`}
+                              >
+                                {justAddedToCart ? (
+                                  <>
+                                    <Check className="h-4 w-4" /> Added to Order!
+                                  </>
+                                ) : (
+                                  <>
+                                    <Plus className="h-4 w-4" /> Add to Order ({quantity}x)
+                                  </>
+                                )}
+                              </Button>
+                            )}
+
+                            <Button
+                              type="button"
+                              onClick={handleContinueFromStep1}
+                              size="lg"
+                              className="flex-1 h-12 text-sm font-bold bg-accent hover:bg-accent-hover text-white rounded-xl shadow-md min-w-[200px]"
+                            >
+                              {cart.items.length > 0
+                                ? `Continue with ${cart.totalQuantity} Card${cart.totalQuantity > 1 ? "s" : ""}`
+                                : `Continue to Details`}
+                              <ArrowRight className="h-4 w-4 ml-2" />
+                            </Button>
+                          </div>
+
+                          {!product.isCustomPricing && (
+                            <div className="pt-2.5 border-t border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                              <span className="text-muted text-[11px] flex items-center gap-1.5">
+                                <ShoppingBag className="h-3.5 w-3.5 text-accent" /> Combine with other card tiers in this order:
+                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {[
+                                  { slug: "essential", label: "Essential (₹499)" },
+                                  { slug: "premium", label: "Premium (₹999)" },
+                                  { slug: "metal", label: "Metal (₹3,499)" },
+                                ]
+                                  .filter((t) => t.slug !== product.slug)
+                                  .map((t) => (
+                                    <Link
+                                      key={t.slug}
+                                      href={`/products/${t.slug}/configure`}
+                                      className="px-2.5 py-1 rounded-lg border border-border bg-surface hover:border-accent hover:text-accent font-semibold text-[11px] transition-all"
+                                    >
+                                      + {t.label}
+                                    </Link>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -968,6 +1226,19 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                           </p>
                         </div>
 
+                        {!product.isCustomPricing && effectiveTotalQuantity > 1 && (
+                          <div className="p-3.5 rounded-xl bg-accent/5 border border-accent/20 flex items-center gap-3 text-xs text-muted">
+                            <Sparkles className="h-4 w-4 text-accent shrink-0" />
+                            <span>
+                              Your personalized name, contact details &amp; cloud profile will be configured across all{" "}
+                              <strong className="text-foreground font-semibold">
+                                {effectiveTotalQuantity} cards
+                              </strong>{" "}
+                              in this combined order.
+                            </span>
+                          </div>
+                        )}
+
                         <form
                           onSubmit={(e) => {
                             e.preventDefault()
@@ -977,19 +1248,29 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                         >
                           <div>
                             <label className="text-xs font-semibold text-foreground mb-1 block">
-                              Full Name (Printed on Card)
+                              Full Name (Printed &amp; Engraved on Card)
                             </label>
+                            <p className="text-[11px] text-muted mb-2">
+                              This exact name will be engraved on the front of your card in real-time.
+                            </p>
                             <div className="relative">
                               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                               <input
                                 type="text"
                                 value={cardDetails.fullName}
-                                onChange={(e) =>
-                                  setCardDetails({ ...cardDetails, fullName: e.target.value })
-                                }
+                                onChange={(e) => {
+                                  const val = e.target.value
+                                  setCardDetails((prev) => ({ ...prev, fullName: val }))
+                                  setAddress((prev) => {
+                                    if (!prev.recipientName || prev.recipientName === cardDetails.fullName) {
+                                      return { ...prev, recipientName: val }
+                                    }
+                                    return prev
+                                  })
+                                }}
                                 placeholder="e.g. Aryan Sharma"
                                 required
-                                className="w-full h-11 pl-10 pr-4 bg-surface-hover border border-border rounded-xl text-xs focus:ring-2 focus:ring-accent outline-none"
+                                className="w-full h-11 pl-10 pr-4 bg-surface-hover border border-border rounded-xl text-xs focus:ring-2 focus:ring-accent outline-none font-medium"
                               />
                             </div>
                           </div>
@@ -1030,19 +1311,35 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                             </div>
                           </div>
 
+                          {/* Optional Company Logo Upload */}
+                          <CompanyLogoUpload
+                            logoUrl={cardDetails.logoUrl}
+                            logoFileName={cardDetails.logoFileName}
+                            onLogoChange={({ logoUrl, logoFileName }) => {
+                              setCardDetails((prev) => ({ ...prev, logoUrl, logoFileName }))
+                            }}
+                          />
+
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                               <label className="text-xs font-semibold text-foreground mb-1 block">
-                                Phone Number
+                                Phone Number (Card Profile)
                               </label>
                               <div className="relative">
                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                                 <input
                                   type="text"
                                   value={cardDetails.phone}
-                                  onChange={(e) =>
-                                    setCardDetails({ ...cardDetails, phone: e.target.value })
-                                  }
+                                  onChange={(e) => {
+                                    const val = e.target.value
+                                    setCardDetails((prev) => ({ ...prev, phone: val }))
+                                    setAddress((prev) => {
+                                      if (!prev.phone || prev.phone === cardDetails.phone) {
+                                        return { ...prev, phone: val }
+                                      }
+                                      return prev
+                                    })
+                                  }}
                                   placeholder="+91 98765 43210"
                                   required
                                   className="w-full h-11 pl-10 pr-4 bg-surface-hover border border-border rounded-xl text-xs focus:ring-2 focus:ring-accent outline-none"
@@ -1113,10 +1410,10 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                       <div className="space-y-6">
                         <div>
                           <h2 className="text-xl font-bold text-foreground mb-1">
-                            3. Delivery Address
+                            3. Delivery &amp; Shipping Address
                           </h2>
                           <p className="text-xs text-muted">
-                            Where should we dispatch your custom {product.name}?
+                            Where should we dispatch your custom {product.name} package?
                           </p>
                         </div>
 
@@ -1130,28 +1427,50 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                               <label className="text-xs font-semibold text-foreground mb-1 block">
-                                Recipient Name
+                                Delivery Recipient Name (For Courier Package)
                               </label>
+                              <p className="text-[11px] text-muted mb-1.5">
+                                Person receiving the shipment parcel. Defaults to printed card name.
+                              </p>
                               <input
                                 type="text"
                                 value={address.recipientName}
-                                onChange={(e) =>
-                                  setAddress({ ...address, recipientName: e.target.value })
-                                }
+                                onChange={(e) => {
+                                  const val = e.target.value
+                                  setAddress((prev) => ({ ...prev, recipientName: val }))
+                                  setCardDetails((prev) => {
+                                    if (!prev.fullName || prev.fullName === address.recipientName) {
+                                      return { ...prev, fullName: val }
+                                    }
+                                    return prev
+                                  })
+                                }}
+                                placeholder={cardDetails.fullName || "e.g. Aryan Sharma"}
                                 required
-                                className="w-full h-11 px-4 bg-surface-hover border border-border rounded-xl text-xs focus:ring-2 focus:ring-accent outline-none"
+                                className="w-full h-11 px-4 bg-surface-hover border border-border rounded-xl text-xs focus:ring-2 focus:ring-accent outline-none font-medium"
                               />
                             </div>
                             <div>
                               <label className="text-xs font-semibold text-foreground mb-1 block">
-                                Mobile Number (for Courier SMS)
+                                Mobile Number (for Courier SMS Alerts)
                               </label>
+                              <p className="text-[11px] text-muted mb-1.5">
+                                For shipment tracking and delivery coordination.
+                              </p>
                               <input
                                 type="tel"
                                 value={address.phone}
-                                onChange={(e) =>
-                                  setAddress({ ...address, phone: e.target.value })
-                                }
+                                onChange={(e) => {
+                                  const val = e.target.value
+                                  setAddress((prev) => ({ ...prev, phone: val }))
+                                  setCardDetails((prev) => {
+                                    if (!prev.phone || prev.phone === address.phone) {
+                                      return { ...prev, phone: val }
+                                    }
+                                    return prev
+                                  })
+                                }}
+                                placeholder={cardDetails.phone || "+91 98765 43210"}
                                 required
                                 className="w-full h-11 px-4 bg-surface-hover border border-border rounded-xl text-xs focus:ring-2 focus:ring-accent outline-none"
                               />
@@ -1490,63 +1809,296 @@ export function ConfigureClient({ product }: ConfigureClientProps) {
                   </div>
 
                   {/* Right: Live Mockup Preview & Summary (5 cols) */}
-                  <div className="lg:col-span-5 space-y-6">
-                    {/* Live Card Graphic Preview */}
-                    <Card className="border-border shadow-md overflow-hidden bg-surface">
-                      <CardHeader className="pb-3 border-b border-border bg-surface-hover">
-                        <div className="flex justify-between items-center">
-                          <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                            <Sparkles className="h-3.5 w-3.5 text-accent" /> Live Card Preview
-                          </CardTitle>
-                          <span className="text-[10px] font-mono uppercase bg-accent/10 text-accent font-bold px-2 py-0.5 rounded">
-                            {product.name}
+                  <div className="lg:col-span-5 space-y-4">
+                    {/* Lighter "Adjust Layout" Preset Options for Premium & Metal Cards (Excluded for Essential & Corporate) */}
+                    {isLayoutAdjustable && (
+                      <Card className="border-border shadow-xs bg-surface overflow-hidden">
+                        <CardHeader className="py-2.5 px-4 border-b border-border bg-surface-hover/60 flex flex-row items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <Sliders className="h-3.5 w-3.5 text-accent" />
+                            <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
+                              Adjust Layout
+                            </CardTitle>
+                          </div>
+                          <span className="text-[10px] font-mono text-accent bg-accent/10 font-bold px-2 py-0.5 rounded-full">
+                            {product.name} Studio
                           </span>
-                        </div>
-                      </CardHeader>
+                        </CardHeader>
+                        <CardContent className="p-3 sm:p-3.5 space-y-3 text-xs">
+                          {/* 1. Name & Title Block Position */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[11px] font-bold text-foreground">
+                                Name &amp; Title Position
+                              </span>
+                              <span className="text-[10px] font-semibold text-accent capitalize">
+                                {nameAlignment.replace("-", " ")}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {[
+                                { id: "bottom-left" as const, label: "Bottom-Left", sub: "Default" },
+                                { id: "bottom-center" as const, label: "Bottom-Center", sub: "Centered" },
+                                { id: "top-left" as const, label: "Top-Left", sub: "Modern" },
+                              ].map((opt) => {
+                                const isSelected = nameAlignment === opt.id
+                                return (
+                                  <div
+                                    key={opt.id}
+                                    role="radio"
+                                    aria-checked={isSelected}
+                                    tabIndex={0}
+                                    onClick={() => setNameAlignment(opt.id)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === " " || e.key === "Enter") {
+                                        e.preventDefault()
+                                        setNameAlignment(opt.id)
+                                      }
+                                    }}
+                                    className={`py-2 px-2 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1 text-center cursor-pointer select-none ${
+                                      isSelected
+                                        ? "border-accent bg-accent/10 text-accent font-bold ring-1 ring-accent/30 shadow-xs"
+                                        : "border-border hover:border-accent/40 bg-surface text-muted hover:text-foreground"
+                                    }`}
+                                  >
+                                    {/* Miniature Card Layout Visual Thumbnail */}
+                                    <div className="w-5 h-3.5 rounded-xs border border-current/40 relative bg-current/5 shrink-0">
+                                      {opt.id === "bottom-left" && (
+                                        <span className="absolute left-0.5 bottom-0.5 w-2 h-0.5 rounded-full bg-current" />
+                                      )}
+                                      {opt.id === "bottom-center" && (
+                                        <span className="absolute left-1/2 -translate-x-1/2 bottom-0.5 w-2.5 h-0.5 rounded-full bg-current" />
+                                      )}
+                                      {opt.id === "top-left" && (
+                                        <span className="absolute left-0.5 top-0.5 w-2 h-0.5 rounded-full bg-current" />
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] sm:text-[11px] font-bold leading-tight truncate w-full">
+                                      {opt.label}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <div
+                                        className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center transition-all ${
+                                          isSelected ? "border-accent bg-accent" : "border-muted/40 bg-transparent"
+                                        }`}
+                                      >
+                                        {isSelected && <div className="w-1 h-1 rounded-full bg-white" />}
+                                      </div>
+                                      <span className="text-[9px] opacity-70 font-mono hidden sm:inline">{opt.sub}</span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
 
-                      <CardContent className="p-6 flex flex-col items-center justify-center">
-                        <div className="w-full max-w-[340px] drop-shadow-xl">
-                          <SmartCardVisual
-                            slug={product.slug}
-                            colorId={selectedColor}
-                            fullName={cardDetails.fullName || "Aryan Sharma"}
-                            designation={cardDetails.designation || "Product Designer"}
-                            company={cardDetails.company || "TapOnce Technologies"}
-                            size="md"
-                            interactive={false}
-                          />
-                        </div>
-                        <p className="text-[10px] text-muted text-center mt-3">
-                          Real-time front side engraving mockup for {product.name}.
-                        </p>
-                      </CardContent>
-                    </Card>
+                          {/* 2. Logo & Chip Icon Position */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[11px] font-bold text-foreground">
+                                Logo &amp; Chip Position
+                              </span>
+                              <span className="text-[10px] font-semibold text-accent capitalize">
+                                {logoAlignment.replace("-", " ")}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {[
+                                { id: "top-left" as const, label: "Top-Left", sub: "Default" },
+                                { id: "top-right" as const, label: "Top-Right", sub: "Executive" },
+                                { id: "top-center" as const, label: "Top-Center", sub: "Minimal" },
+                              ].map((opt) => {
+                                const isSelected = logoAlignment === opt.id
+                                return (
+                                  <div
+                                    key={opt.id}
+                                    role="radio"
+                                    aria-checked={isSelected}
+                                    tabIndex={0}
+                                    onClick={() => setLogoAlignment(opt.id)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === " " || e.key === "Enter") {
+                                        e.preventDefault()
+                                        setLogoAlignment(opt.id)
+                                      }
+                                    }}
+                                    className={`py-2 px-2 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1 text-center cursor-pointer select-none ${
+                                      isSelected
+                                        ? "border-accent bg-accent/10 text-accent font-bold ring-1 ring-accent/30 shadow-xs"
+                                        : "border-border hover:border-accent/40 bg-surface text-muted hover:text-foreground"
+                                    }`}
+                                  >
+                                    {/* Miniature Card Layout Visual Thumbnail */}
+                                    <div className="w-5 h-3.5 rounded-xs border border-current/40 relative bg-current/5 shrink-0">
+                                      {opt.id === "top-left" && (
+                                        <span className="absolute left-0.5 top-0.5 w-1.5 h-1.5 rounded-xs bg-current" />
+                                      )}
+                                      {opt.id === "top-right" && (
+                                        <span className="absolute right-0.5 top-0.5 w-1.5 h-1.5 rounded-xs bg-current" />
+                                      )}
+                                      {opt.id === "top-center" && (
+                                        <span className="absolute left-1/2 -translate-x-1/2 top-0.5 w-1.5 h-1.5 rounded-xs bg-current" />
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] sm:text-[11px] font-bold leading-tight truncate w-full">
+                                      {opt.label}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <div
+                                        className={`w-2.5 h-2.5 rounded-full border flex items-center justify-center transition-all ${
+                                          isSelected ? "border-accent bg-accent" : "border-muted/40 bg-transparent"
+                                        }`}
+                                      >
+                                        {isSelected && <div className="w-1 h-1 rounded-full bg-white" />}
+                                      </div>
+                                      <span className="text-[9px] opacity-70 font-mono hidden sm:inline">{opt.sub}</span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Shared Reusable Live Card Preview */}
+                    <LiveCardPreview
+                      slug={product.slug}
+                      colorId={selectedColor}
+                      modelName={product.name}
+                      fullName={cardDetails.fullName || address.recipientName || ""}
+                      designation={cardDetails.designation}
+                      company={cardDetails.company}
+                      phone={cardDetails.phone || address.phone || ""}
+                      website={cardDetails.website}
+                      logoUrl={cardDetails.logoUrl || null}
+                      nameAlignment={isLayoutAdjustable ? nameAlignment : undefined}
+                      logoAlignment={isLayoutAdjustable ? logoAlignment : undefined}
+                      layoutTemplate={product.slug !== "corporate" ? layoutTemplate : undefined}
+                    />
 
                     {/* Order Summary Card */}
                     <Card className="border-border shadow-sm bg-surface">
-                      <CardHeader className="pb-3 border-b border-border">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted">
-                          Order Summary
+                      <CardHeader className="pb-3 border-b border-border bg-surface-hover/50 flex flex-row items-center justify-between">
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                          <ShoppingCart className="h-3.5 w-3.5 text-accent" />
+                          Order Summary {!product.isCustomPricing && cart.items.length > 0 && `(${cart.totalQuantity} cards)`}
                         </CardTitle>
+                        {!product.isCustomPricing && cart.items.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => cart.clearCart()}
+                            className="text-[10px] text-muted hover:text-red-500 transition-colors cursor-pointer"
+                            title="Clear cart items"
+                          >
+                            Clear
+                          </button>
+                        )}
                       </CardHeader>
-                      <CardContent className="pt-4 space-y-2.5 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-muted">
-                            {product.name} Card {!product.isCustomPricing ? `(${quantity}x)` : ""}
-                          </span>
-                          <span className="font-semibold text-foreground">
-                            {product.isCustomPricing ? product.priceDisplay : `₹${product.price * quantity}`}
-                          </span>
-                        </div>
-                        {!product.isCustomPricing && quantity > 1 && (
-                          <div className="text-[11px] text-muted -mt-1.5">
-                            ₹{product.price} per card × {quantity}
+                      <CardContent className="pt-4 space-y-3 text-xs">
+                        {/* When Cart Has Items */}
+                        {!product.isCustomPricing && cart.items.length > 0 ? (
+                          <div className="space-y-2 border-b border-border pb-3">
+                            {cart.items.map((item) => (
+                              <div
+                                key={item.id}
+                                className="p-2 rounded-xl bg-surface-hover/70 border border-border flex items-center justify-between gap-2"
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span
+                                    className="w-3.5 h-3.5 rounded-full shrink-0 border border-black/20 shadow-2xs"
+                                    style={{ background: item.colorBg || item.colorId }}
+                                  />
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-bold text-foreground truncate">
+                                      {item.productName}
+                                    </div>
+                                    <div className="text-[10px] text-muted truncate">
+                                      {item.colorName} • {item.layoutTemplate ? `${item.layoutTemplate.replace("-", " ").replace(/\b\w/g, (l: string) => l.toUpperCase())} • ` : ""}₹{item.unitPrice}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <div className="flex items-center border border-border rounded-lg bg-surface">
+                                    <button
+                                      type="button"
+                                      onClick={() => cart.stepItemQuantity(item.id, -1)}
+                                      className="w-5 h-5 flex items-center justify-center text-xs text-muted hover:text-foreground cursor-pointer select-none"
+                                      aria-label="Decrease quantity"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="w-5 text-center text-[11px] font-bold text-foreground">
+                                      {item.quantity}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => cart.stepItemQuantity(item.id, 1)}
+                                      className="w-5 h-5 flex items-center justify-center text-xs text-muted hover:text-foreground cursor-pointer select-none"
+                                      aria-label="Increase quantity"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                  <span className="text-xs font-semibold text-foreground min-w-[45px] text-right">
+                                    ₹{item.unitPrice * item.quantity}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => cart.removeItem(item.id)}
+                                    className="text-muted hover:text-red-500 p-0.5 transition-colors cursor-pointer"
+                                    title="Remove from order"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          /* Single item default preview */
+                          <>
+                            <div className="flex justify-between">
+                              <span className="text-muted">
+                                {product.name} Card {!product.isCustomPricing ? `(${quantity}x)` : ""}
+                              </span>
+                              <span className="font-semibold text-foreground">
+                                {product.isCustomPricing ? product.priceDisplay : `₹${product.price * quantity}`}
+                              </span>
+                            </div>
+                            {!product.isCustomPricing && quantity > 1 && (
+                              <div className="text-[11px] text-muted -mt-1.5">
+                                ₹{product.price} per card × {quantity}
+                              </div>
+                            )}
+                            <div className="flex justify-between">
+                              <span className="text-muted">Selected Color</span>
+                              <span className="font-semibold text-accent">{activeColorObj.name}</span>
+                            </div>
+                            {!product.isCustomPricing && (
+                              <div className="flex justify-between">
+                                <span className="text-muted">Layout Template</span>
+                                <span className="font-semibold text-accent capitalize">
+                                  {layoutTemplate === "classic"
+                                    ? "Classic"
+                                    : layoutTemplate === "logo-focus"
+                                    ? "Logo Focus"
+                                    : "Name Focus"}
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {isLayoutAdjustable && (
+                          <div className="flex justify-between">
+                            <span className="text-muted">Card Layout</span>
+                            <span className="font-semibold text-accent capitalize">
+                              {nameAlignment.replace("-", " ")} / {logoAlignment.replace("-", " ")}
+                            </span>
                           </div>
                         )}
-                        <div className="flex justify-between">
-                          <span className="text-muted">Selected Color</span>
-                          <span className="font-semibold text-accent">{activeColorObj.name}</span>
-                        </div>
                         {product.slug === "corporate" && (
                           <div className="flex justify-between">
                             <span className="text-muted">Est. Quantity</span>

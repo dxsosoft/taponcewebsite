@@ -71,7 +71,11 @@ function InquiryReceivedContent() {
 
   const companyName = inquiry?.companyName || inquiry?.recipientName || "Your Organization"
   const quantity = inquiry?.quantity || 10
-  const colorName = inquiry?.cardColor ? inquiry.cardColor.charAt(0).toUpperCase() + inquiry.cardColor.slice(1) : "Bespoke Brand Colors"
+  const colorName = inquiry?.cardColor
+    ? inquiry.cardColor.startsWith("#")
+      ? `Custom Hex (${inquiry.cardColor.toUpperCase()})`
+      : inquiry.cardColor.charAt(0).toUpperCase() + inquiry.cardColor.slice(1)
+    : "Bespoke Brand Colors"
 
   return (
     <>
@@ -98,32 +102,35 @@ function InquiryReceivedContent() {
 
         <Section className="py-12 md:py-16">
           <div className="container mx-auto px-4 max-w-3xl">
-            {/* Status Hero Card */}
-            <div className="bg-surface border border-border/80 p-8 sm:p-12 rounded-3xl shadow-lg text-center animate-in fade-in zoom-in duration-300">
-              {/* Badge Icon */}
-              <div className="w-20 h-20 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-6 shadow-xs ring-8 ring-amber-500/5">
-                <Clock className="h-10 w-10 animate-pulse" />
+            {/* Success Card Container */}
+            <div className="bg-surface border border-border rounded-3xl shadow-xl p-8 md:p-12 text-center animate-in fade-in zoom-in duration-300">
+              {/* Green/Teal Verified Confirmation Icon */}
+              <div className="w-20 h-20 bg-accent/10 text-accent rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <CheckCircle2 className="h-10 w-10" />
               </div>
 
-              {/* Tag */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold mb-4 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-                <Sparkles className="h-3.5 w-3.5" /> Enterprise Inquiry Under Review
+              {/* Status Badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold mb-4 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                <Clock className="h-3.5 w-3.5 animate-pulse" /> Inquiry Received &bull; Under Review
               </div>
 
-              {/* Main Headline & Reassuring Subtext */}
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3 text-foreground">
-                Request Received
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2 text-foreground">
+                Thank You for Your Corporate Inquiry!
               </h1>
               <p className="text-muted text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-                Your enterprise inquiry has been submitted. Our team is reviewing your requirements and will prepare a custom quote for your organization.
+                Your enterprise order details have been registered. Our corporate design and production team is reviewing your specifications and preparing a custom quote.
               </p>
 
-              {/* Inquiry Reference ID Pill */}
-              <div className="inline-flex items-center gap-3 bg-surface-hover/80 border border-border px-5 py-3 rounded-2xl mb-8">
-                <span className="text-xs text-muted font-medium">Inquiry Reference:</span>
-                <span className="font-mono font-bold text-base text-foreground tracking-wide">
-                  {inquiryId}
-                </span>
+              {/* Order Reference Box */}
+              <div className="max-w-md mx-auto bg-surface-hover/80 border border-border rounded-2xl p-4 mb-8 flex items-center justify-between shadow-xs">
+                <div className="text-left">
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-muted block">
+                    Inquiry Reference Number
+                  </span>
+                  <strong className="text-lg font-mono font-bold text-foreground">
+                    {inquiryId}
+                  </strong>
+                </div>
                 <button
                   type="button"
                   onClick={handleCopyId}
@@ -169,7 +176,7 @@ function InquiryReceivedContent() {
                   <div>
                     <span className="text-muted block mb-0.5">Card Finish / Model</span>
                     <div className="flex items-center gap-2 mt-1">
-                      <CardBadge tierId="corporate" colorId="custom" size={32} />
+                      <CardBadge tierId="corporate" colorId={inquiry?.cardColor || "custom"} size={32} />
                       <strong className="text-foreground font-semibold">
                         TapOnce Custom ({colorName})
                       </strong>
